@@ -1,0 +1,22 @@
+{
+  "dictionary": {
+    "file": {
+      "bin1": "bin1.data",
+      "bin2": "bin2.data",
+      "bin3": "bin3.data",
+      "bin4": "bin4.data"
+    }
+  },
+  "todo": [
+    {
+      "replace": {
+        "bin1": "bin2"
+      }
+    },
+    {
+      "replace": {
+        "bin3": "bin4"
+      }
+    }
+  ]
+}

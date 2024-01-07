@@ -1,0 +1,29 @@
+{
+  "todo": [
+    {
+      "replace": {
+        "line 3": "res3"
+      }
+    },
+    {
+      "replace": {
+        "line 2": "res2"
+      }
+    },
+    {
+      "replace": {
+        "line 1": "res1"
+      }
+    }
+  ],
+  "dictionary": {
+    "text": {
+      "line 1": "Some text to replace.",
+      "line 2": "Here should be another result",
+      "line 3": "after processing.",
+      "res1": "Test demonstrates that it is not important if",
+      "res2": "todo section in the json file goes first",
+      "res3": "and the disctionary is in the end of the script file.\n"
+    }
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "dictionary": {
+    "file": {
+      "bin1": "bin1.data",
+      "bin2": "bin2.data",
+      "bin5": "bin5.data"
+    },
+    "decimal": {
+      "be ": [98, 101, 32],
+      "processing.":[112, 114, 111, 99, 101, 115, 115, 105, 110, 103, 46]
+    },
+    "hexadecimal": {
+      "EndOfTheLine": ["0A"],
+      "whitespace": ["20"]
+    },
+    "text": {
+      "Would": "Would",
+      "anotherR": "another result",
+      "after": "after",
+      "regards": "With kind regards!"
+    },
+    "composite": [{
+        "composite 001": ["Would", "whitespace", "be ", "anotherR", "EndOfTheLine"]
+      },
+      {
+        "complexOne": ["after", "whitespace", "processing."]
+      }
+    ]
+  },
+  "todo": [
+    {
+      "replace": {
+        "bin1": "bin2"
+      }
+    },
+    {
+      "replace": {
+        "complexOne": "regards"
+      }
+    },
+    {
+      "replace": {
+        "composite 001": "bin5"
+      }
+    }
+  ]
+}
