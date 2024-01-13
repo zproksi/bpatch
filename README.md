@@ -1,6 +1,6 @@
 # `bpatch`
 
-**PURPOSE:** Let's say you would like to modify a file. And the description for this modification you wants to be formalized in human readable format - so that it is just easy editable. For example [JSON] format, like this project is using. Then, this tool is exactly what you need.
+**PURPOSE:** Let's say you would like to modify a file - to replace a couple of byte sequences to other byte sequences. And the rules of this modification you wants to be formalized in human readable format - so that it is just easy editable. For example [JSON] format, like this project is using. Then, this tool is exactly what you need.
 
 The console application enables the transformation of files in binary form, adhering to the rules stipulated in a file described in [JSON] format. The core logic of the application is encapsulated within a distinct static library, granting the power to leverage this code within any application.
 
