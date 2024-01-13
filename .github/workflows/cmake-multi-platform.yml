@@ -79,5 +79,5 @@ jobs:
       # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       if: matrix.os=='windows-latest'
-      working-directory: ${{ steps.strings.outputs.build-output-dir }}/testbpatch/${{ matrix.build_type }}/
+      working-directory: ${{ steps.strings.outputs.build-output-dir }}\testbpatch\${{ matrix.build_type }}\
       run: testbpatch.exe
