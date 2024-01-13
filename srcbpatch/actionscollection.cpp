@@ -157,7 +157,7 @@ void ActionsCollection::OnJsonObjectBegins(TJSONObject* const pJson)
 {
     if (0 == replaceSV.compare(pJson->name_) && pJson->level_ == levelReplaceIn)
     {
-        replaces_.emplace_back(std::move(VectorStringviewPairs()));
+        replaces_.emplace_back(VectorStringviewPairs());
     }
 }
 
@@ -173,7 +173,7 @@ void ActionsCollection::OnJsonObjectParsed(TJSONObject* const pJson)
         }
 
         if (const bool added = dictionary_.AddBinaryLexeme(pJson->name_,
-                std::move(AbstractBinaryLexeme::LexemeFromStringView(value)));
+                AbstractBinaryLexeme::LexemeFromStringView(value));
             !added)
         {// overwritten
             ReportDuplicateNameError(pJson->name_);
@@ -206,7 +206,7 @@ void ActionsCollection::OnJsonObjectParsed(TJSONObject* const pJson)
 
         // create binary lexeme from readed data
         if (const bool added = dictionary_.AddBinaryLexeme(pJson->name_,
-            move(AbstractBinaryLexeme::LexemeFromVector(move(adata))));
+            AbstractBinaryLexeme::LexemeFromVector(move(adata)));
             !added)
         {// overwritten
             ReportDuplicateNameError(pJson->name_);
@@ -242,7 +242,7 @@ void ActionsCollection::OnJsonArrayParsed(TJSONObject* const pJson)
                 "Expecting only values [0..255] in \"decimal\" dictionarys");
 
         if (const bool added = dictionary_.AddBinaryLexeme(pJson->name_,
-            std::move(AbstractBinaryLexeme::LexemeFromStringView(value)));
+            AbstractBinaryLexeme::LexemeFromStringView(value));
             !added)
         {// overwritten
             ReportDuplicateNameError(pJson->name_);
@@ -257,7 +257,7 @@ void ActionsCollection::OnJsonArrayParsed(TJSONObject* const pJson)
                 "Expecting only string values [00..FF] in \"hexadecimal\" dictionarys");
 
         if (const bool added = dictionary_.AddBinaryLexeme(pJson->name_,
-            std::move(AbstractBinaryLexeme::LexemeFromStringView(value)));
+            AbstractBinaryLexeme::LexemeFromStringView(value));
             !added)
         {// overwritten
             ReportDuplicateNameError(pJson->name_);
@@ -267,9 +267,7 @@ void ActionsCollection::OnJsonArrayParsed(TJSONObject* const pJson)
 
     if (IsCompositeArray(pJson))
     {
-        composites_.emplace_back(pJson->name_,
-            std::move(
-                ParseArray(pJson, "Composite lexemes can contain only names")));
+        composites_.emplace_back(pJson->name_, ParseArray(pJson, "Composite lexemes can contain only names"));
         return;
     }
 }
