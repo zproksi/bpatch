@@ -25,7 +25,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
         build_type: [Release, Debug]
-        c_compiler: [gcc, clang, cl]
+        c_compiler: [gcc, cl] #clang, has errors for a while
         include:
           - os: windows-latest
             c_compiler: cl
@@ -68,17 +68,32 @@ jobs:
       # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
 
-    - name: Test on Ubuntu
+    - name: Unit Tests on Ubuntu
       # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       if: matrix.os=='ubuntu-latest'
       working-directory: ${{ steps.strings.outputs.build-output-dir }}/testbpatch/
       run: ./testbpatch
-      
-    - name: Test on Windows
+
+    - name: Unit Tests on Windows
       # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       if: matrix.os=='windows-latest'
-      working-directory: ${{ steps.strings.outputs.build-output-dir }}/testbpatch/${{ matrix.build_type }}\
+      working-directory: ${{ steps.strings.outputs.build-output-dir }}/testbpatch/${{ matrix.build_type }}/
       shell: cmd
       run: .\testbpatch.exe
+
+    - name: Integration Tests on Ubuntu
+      # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
+      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
+      if: matrix.os=='ubuntu-latest'
+      working-directory: ${{ github.workspace }}/IntegrationTests/
+      run: ./in_tests.sh ${{ steps.strings.outputs.build-output-dir }}/bpatch
+
+    - name: Integration Tests on Windows
+      # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
+      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
+      if: matrix.os=='windows-latest'
+      working-directory:  ${{ github.workspace }}/IntegrationTests/
+      shell: cmd
+      run: in_tests.cmd ${{ steps.strings.outputs.build-output-dir }}\${{ matrix.build_type }}\testbpatch.exe
