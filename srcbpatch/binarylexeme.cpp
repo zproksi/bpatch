@@ -30,13 +30,13 @@ vector<char> CreateVectorWithData(const char* const pData, const size_t sz)
 
 unique_ptr<AbstractBinaryLexeme> AbstractBinaryLexeme::LexemeFromStringView(const string_view asrc)
 {
-    return LexemeFromVector(move(CreateVectorWithData(asrc.data(), asrc.size())));
+    return LexemeFromVector(CreateVectorWithData(asrc.data(), asrc.size()));
 }
 
 
 unique_ptr<AbstractBinaryLexeme> AbstractBinaryLexeme::LexemeFromSpan(const span<const char> asrc)
 {
-    return LexemeFromVector(move(CreateVectorWithData(asrc.data(), asrc.size())));
+    return LexemeFromVector(CreateVectorWithData(asrc.data(), asrc.size()));
 }
 
 
