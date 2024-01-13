@@ -1,6 +1,8 @@
 # `bpatch`
 
-**PURPOSE:** The console application enables the transformation of files in binary form, adhering to the rules stipulated in a file described in [JSON] format. The core logic of the application is encapsulated within a distinct static library, granting the power to leverage this code within any application.
+**PURPOSE:** Let's say you would like to modify a file. And the description for this modification you wants to be formalized in human readable format - so that it is just easy editable. For example [JSON] format, like this project is using. Then, this tool is exactly what you need.
+
+The console application enables the transformation of files in binary form, adhering to the rules stipulated in a file described in [JSON] format. The core logic of the application is encapsulated within a distinct static library, granting the power to leverage this code within any application.
 
 **MNEMONIC:** binary stream, substitution, sequential substitution, encryption, compression, binary data conversion
 
@@ -73,10 +75,23 @@ Feel free to use the following [JSON] files as samples when creating your own sc
 
 ## Building
 
+1. There are two files you can use for rebuilding of the `bpatch`:
+   * For Windows - [`rebuild.cmd`][rebuild.cmd]
+   > You must have MSVS 2022 installed;
+
+   > The environment variable `VS170COMNTOOLS` must be present in the system. You can execute developer console from MSVS 2022 for this. Also, ensure that you have installed **C++ CMake tools for Windows** in the individual components;
+
+   > Specify `rebuild.cmd Debug` for build Debug mode. Release mode will be built by default;
+
+   * For Linux - [`rebuild.sh`][rebuild.sh]
+   > Specify `rebuild.sh Debug` for build Debug mode. Release mode will be built by default;
+
+   **NOTE:** For both scripts and modes the result folders will be recreated from scratch with every build
 1. The minimum version of `cmake` required for this project is 3.19
+1. Follow the typical `cmake` build process if you would like to build manually
 1. Upon specifying the folder to generate the MSVS solution or to build under Linux, `cmake` should automatically download Google Tests
-1. Follow the typical `cmake` build process
-1. If you are unfamiliar with `cmake`, refer to the tips provided at the end of the [`CMakeLists.txt`][cmakelists_txt] file
+1. If you are unfamiliar with `cmake`, you can also refer to the tips provided at the end of the [`CMakeLists.txt`][cmakelists_txt] file
+
 
 ## Unit Tests
 
@@ -110,6 +125,10 @@ Feel free to use email bpatchzaytsev@gmail.com along with the title:
 [`CMakeLists.txt`][cmakelists_txt]
 
 [`bpatch.cpp`][bpatch_cpp]
+
+[`rebuild.cmd`][rebuild.cmd]
+
+[`rebuild.sh`][rebuild.sh]
 
 ---
 [`actionscollection.cpp`][actionscollection_cpp]
@@ -198,6 +217,8 @@ Feel free to use email bpatchzaytsev@gmail.com along with the title:
 
 [cmakelists_txt]:./CMakeLists.txt
 [bpatch_cpp]:./bpatch.cpp
+[rebuild.cmd]:./rebuild.cmd
+[rebuild.sh]:./rebuild.sh
 [actionscollection_cpp]:./srcbpatch/actionscollection.cpp
 [actionscollection_h]:./srcbpatch/actionscollection.h
 [binarylexeme_cpp]:./srcbpatch/binarylexeme.cpp

@@ -1,0 +1,6 @@
+# folders of rebuild
+buildLinuxDebug/
+buildLinuxRelease/
+buildWinDebug/
+buildWinRelease/
+x64/
