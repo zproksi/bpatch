@@ -15,8 +15,7 @@ namespace bpatch
 namespace
 {
 
-    constexpr const size_t levelTodo = 1;
-    constexpr const size_t levelDictionary = 1;
+    constexpr const size_t levelBase = 1; // dictionary, todo
 
     constexpr const size_t levelReplaceIn = 3;
 
@@ -30,7 +29,7 @@ namespace
 template <const std::string_view& sv1>
 bool JsonAtLevel1(TJSONObject* const pJson)
 {
-    return (1 == pJson->level_ &&
+    return (levelBase == pJson->level_ &&
         0 == sv1.compare(pJson->name_));
 };
 
