@@ -57,7 +57,7 @@ else()
     message(FATAL_ERROR "Unsupported compiler")
 endif()
 
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang") # note Clang 14.0.0 and ranges seems are not friends yet
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang") #note: Clang 14.0.0 and ranges seems are not friends yet
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
 endif()
 

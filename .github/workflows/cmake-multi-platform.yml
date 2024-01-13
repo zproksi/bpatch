@@ -25,7 +25,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
         build_type: [Release, Debug]
-        c_compiler: [gcc, cl, clang] #clang, has errors for a while
+        c_compiler: [gcc, cl] #note: clang 14.0.0 and ranges seems are not friends yet  (clang skipped)
         include:
           - os: windows-latest
             c_compiler: cl
@@ -33,14 +33,14 @@ jobs:
           - os: ubuntu-latest
             c_compiler: gcc
             cpp_compiler: g++
-          - os: ubuntu-latest
-            c_compiler: clang
-            cpp_compiler: clang++
+#          - os: ubuntu-latest
+#            c_compiler: clang       #no member named 'equal', 'any_of', 'find_if' in namespace 'std::ranges' for clang yet
+#            cpp_compiler: clang++
         exclude:
           - os: windows-latest
             c_compiler: gcc
-          - os: windows-latest
-            c_compiler: clang
+#          - os: windows-latest
+#            c_compiler: clang
           - os: ubuntu-latest
             c_compiler: cl
 
