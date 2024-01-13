@@ -32,6 +32,8 @@ then
     exit 1
 fi
 
+get_script_path
+
 divisor
 echo "This script is located at: $SCRIPT_PATH"
 echo "current folder is ${CWD}"
@@ -39,7 +41,6 @@ echo "Files will be written here"
 divisor
 
 
-get_script_path
 # folder with actions
 FOLDER_FA=${SCRIPT_PATH}/scripts
 # folder with binary files if they exists in test

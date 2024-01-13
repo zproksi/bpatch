@@ -29,7 +29,7 @@ namespace
             // get full path for executable
 #ifdef __linux__
             char pathBuffer[PATH_MAX] = {0};
-            readlink(R"(/proc/self/exe)", pathBuffer, PATH_MAX);
+            [[maybe_unused]] auto result = readlink(R"(/proc/self/exe)", pathBuffer, PATH_MAX);
 #else
             TCHAR pathBuffer[MAX_PATH] = {0};
             GetModuleFileName(nullptr, pathBuffer, MAX_PATH);
