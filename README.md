@@ -1,11 +1,31 @@
 # `bpatch`
 
-**PURPOSE:** Let's say you would like to modify a file. And the description for this modification you wants to be formalized in human readable format - so that it is just easy editable. For example [JSON] format, like this project is using. Then, this tool is exactly what you need.
+**PURPOSE:** Suppose you need to modify a file and replace several byte sequences with other byte sequences. Furthermore, imagine you want these modification rules to be formalized in a human-readable format, so they're easy to edit. If that's the case, then this tool is exactly what you need.
 
-The console application enables the transformation of files in binary form, adhering to the rules stipulated in a file described in [JSON] format. The core logic of the application is encapsulated within a distinct static library, granting the power to leverage this code within any application.
+Domains where `bpatch` will be surely useful
+<ul><details><summary>Encryption</summary>
+  For example, you could create two mirror replacement rules to convert any text into an indecipherable set of unique binary sequences. In this way, only you and your intended recipient would be able to read your messages. Want more details - let the <a href="#contacts">author</a> know
+</details></ul>
+<ul><details><summary>Data migration; Data transformation</summary>
+  If you understand how your data should be processed and what needs replacing, then bpatch is your solution. Furthermore, if you find any missing functionality, don't hesitate to <a href="#contacts">contact</a> the author
+</details></ul>
+<ul><details><summary>Forensic Analysis and Cybersecurity</summary>
+  bpatch can be used to analyze and transform binary data, which is often crucial in these fields
+</details></ul>
+<ul><details><summary>Software development; Testing; Gaming Industry - Binary data transformations</summary>
+  If you need to manipulate binary data frequently and want to automate these changes, bpatch could simplify this process
+</details></ul>
+<ul><details><summary>Automated Build and Deployment Pipelines</summary>
+  bpatch can be part of Continuous Integration/Continuous Deployment (CI/CD) pipelines to handle the transformation of binary data as part of the build or deployment process
+</details></ul>
+<ul><details><summary>Software development - using of the bpatch as static library</summary>
+  Developers can integrate bpatch as static library into their applications to handle binary data flows
+</details></ul>
+<hr/>
 
-**MNEMONIC:** binary stream, substitution, sequential substitution, encryption, compression, binary data conversion
+**MNEMONIC:** binary stream, substitution, sequential substitution, encryption, compression, binary data conversion, Test, Testing, Continuous integration, Cybersequrity, Data migration, Data transformation, Encryption, Binary data transformation, json parsing, C++ code style, C++ 20, application architecture, virtual inheritance, data flow
 
+**Table of Contents:**
 * [`bpatch`](#bpatch)
   * [Description](#description)
   * [File Descriptions](#file-descriptions)
@@ -22,8 +42,8 @@ The console application enables the transformation of files in binary form, adhe
 
 ## Description
 
-`bpatch` is an application designed to transform a file's data based on customizable replacement rules. These rules are conveniently outlined in the universally recognized [JSON] format. The truly powerful feature of `bpatch` lies in its flexibility, allowing for various byte sequences to be set according to user preference. Additionally, it provides a robust choice of replacement modes; offering sequential, parallel, and mixed modes to cater to all possible data manipulation needs. You can familiarize yourself with the application's user manual by running it without any parameters. Alternatively, you can explore the [`consoleparametersreader.cpp`][consoleparametersreader_cpp] file to understand the code base.
- 
+`bpatch` is an application designed to transform a file's data based on easily readable and editable replacement rules. These rules are established in [JSON] format. Functionality provides sequential, parallel, and mixed modes to perform all possible data manipulation needs. Investigate [`bpatch_json.md`][bpatch_json_md] to acquire more details of the current set of possibilities 
+
 ## File Descriptions
 
 The `bpatch` package exposes next group of files to user:
@@ -72,7 +92,6 @@ are being used by Integration tests.
 Feel free to use the following [JSON] files as samples when creating your own scripts:
 [`choicereplace.json`][choicereplace_json], [`decimal.json`][decimal_json], [`hexadecimal.json`][hexadecimal_json], [`mixed.json`][mixed_json], [`text.json`][text_json], [`withbin.json`][withbin_json], [`tohex.json`][tohex_json], [`fromhex.json`][fromhex_json]
 
-
 ## Building
 
 1. There are two files you can use for rebuilding of the `bpatch`:
@@ -92,7 +111,6 @@ Feel free to use the following [JSON] files as samples when creating your own sc
 1. Upon specifying the folder to generate the MSVS solution or to build under Linux, `cmake` should automatically download Google Tests
 1. If you are unfamiliar with `cmake`, you can also refer to the tips provided at the end of the [`CMakeLists.txt`][cmakelists_txt] file
 
-
 ## Unit Tests
 
 The [unit tests files](#unit-tests) are housed in a separate project, which you can find in the 'testbpatch' subfolder
@@ -104,7 +122,6 @@ The unit tests primarily cover the application's main functionality. A portion o
 Integration tests for the program have been designed as scripts. All required auxiliary files can be found in the 'IntegrationTests' folder. There are scripts both for both Windows [`in_tests.cmd`][in_tests_cmd] and Linux [`in_tests.sh`][in_tests_sh].
 Execute the tests in the console by providing the script with the name of the `bpatch` executable as a parameter. Verify the absence of errors in the console output
 
-
 ## Contacts
 
 Feel free to use email bpatchzaytsev@gmail.com along with the title:
@@ -115,7 +132,6 @@ Feel free to use email bpatchzaytsev@gmail.com along with the title:
    1. bpatch support request
    1. bpatch collaboration proposal
 
-
 ## Copyright
 
 [MIT License](https://opensource.org/license/mit/) Copyright <2024> [Alexey Zaytsev](https://www.linkedin.com/in/zaytsevalexey/)
@@ -125,6 +141,8 @@ Feel free to use email bpatchzaytsev@gmail.com along with the title:
 [`CMakeLists.txt`][cmakelists_txt]
 
 [`bpatch.cpp`][bpatch_cpp]
+
+[`bpatch_json.md`][bpatch_json_md]
 
 [`rebuild.cmd`][rebuild.cmd]
 
@@ -217,6 +235,7 @@ Feel free to use email bpatchzaytsev@gmail.com along with the title:
 
 [cmakelists_txt]:./CMakeLists.txt
 [bpatch_cpp]:./bpatch.cpp
+[bpatch_json_md]:./bpatch_json.md
 [rebuild.cmd]:./rebuild.cmd
 [rebuild.sh]:./rebuild.sh
 [actionscollection_cpp]:./srcbpatch/actionscollection.cpp
