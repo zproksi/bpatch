@@ -6,7 +6,7 @@
 * link to [`README.md`][readme_md] for `bpatch`
 * [`bpatch Application Guide`](#bpatch-application-guide)
   * [Application Console Parameters](#application-console-parameters)
-  * [Folders for Actions and Binary Data: AFN & DFFN](#folders-for-actions-and-binary-data:-afn-&-dffn)
+  * [Folders for Actions and Binary Data. AFN and BFFN](#folders-for-actions-and-binary-data-afn-and-bffn)
   * [Actions File Sample](#actions-file-sample)
   * [JSON Composition Rules](#json-composition-rules)
     * [dictionary](#dictionary)
@@ -24,21 +24,21 @@ Command format of `bpatch` is defined as follows:
 | `-a ACTIONS` | Rules fetched from the ACTIONS file will be applied to the SOURCE file |
 | `-d DEST` |  If used, results will be saved into DEST file. If `-d` or `-w` is not used, SOURCE file will be modified directly in place. In case if `-d` was used and the DEST file exists `bpatch` interrupts processing |
 | `-w DEST` | Use this flag to force override the DEST file |
-| `-fa AFN` | To specify the actions folder name: AFN, where ACTIONS file will be searched |
-| `-fb BFFN` | To specify the binary files folder name: BFFN, where binary files potentially mentioned in ACTIONS file will be searched |
+| `-fa AFN` | To specify the Actions Folder Name: AFN, where ACTIONS file will be searched |
+| `-fb BFFN` | To specify the Binary Files Folder Name: BFFN, where binary files potentially mentioned in ACTIONS file will be searched |
 | `-h, ?, --help, /h` | Display help message |
 
 **NOTE:** All parameters are case insensitive (e.g. `-w` is the same as `-W`). Wild characters are not allowed (but planned to simplify processing files by mask).
 
-## Folders for Actions and Binary Data: AFN & DFFN
+## Folders for Actions and Binary Data. AFN and BFFN
 
 The ACTIONS file will be initially searched for in the current directory and then in the 'bpatch_a' subfolder located near the 'bpatch' executable. Binary files referenced in the ACTIONS file will be searched first in the current directory, then in the 'bpatch_b' subfolder located near the 'bpatch' executable. So the structure must be next:
   * Installation folder
     * `bpatch`
     * bpatch_a\\ACTIONS files
-    * bpatch_b\\binary data files from ACTIONS file (in necessary)
+    * bpatch_b\\binary data files from ACTIONS file (if files are needed)
 
-**NOTE:** It's possible to modify these folders using `-fa` for actions folder and `-fb` for binary files folder
+**NOTE:** It's possible to modify these folders using `-fa` for actions folder (AFN) and `-fb` for binary files folder (BFFN)
 
 ## Actions File Sample
 An Actions file sample written in proven ASCII symbols and [`JSON`][JSON] format can be as follows:
