@@ -1,9 +1,27 @@
 # `bpatch`
 
-**PURPOSE:** Let's say you would like to modify a file - to replace a couple of byte sequences to other byte sequences. And the rules of this modification you wants to be formalized in human readable format - so that it is just easy editable. For example [JSON] format, like this project is using. Then, this tool is exactly what you need.
+**PURPOSE:** Suppose you need to modify a file and replace several byte sequences with other byte sequences. Furthermore, imagine you want these modification rules to be formalized in a human-readable format, so they're easy to edit. If that's the case, then this tool is exactly what you need.
 
-The console application enables the transformation of files in binary form, adhering to the rules stipulated in a file described in [JSON] format. The core logic of the application is encapsulated within a distinct static library, granting the power to leverage this code within any application.
-
+Domains where `bpatch` will be surely useful
+<ul><details><summary>Encryption</summary>
+  For example, you could create two mirror replacement rules to convert any text into an indecipherable set of unique binary sequences. In this way, only you and your intended recipient would be able to read your messages. Want more details - let the <a href="#contacts">author</a> know
+</details></ul>
+<ul><details><summary>Data migration; Data transformation</summary>
+  If you understand how your data should be processed and what needs replacing, then bpatch is your solution. Furthermore, if you find any missing functionality, don't hesitate to <a href="#contacts">contact</a> the author
+</details></ul>
+<ul><details><summary>Forensic Analysis and Cybersecurity</summary>
+  bpatch can be used to analyze and transform binary data, which is often crucial in these fields
+</details></ul>
+<ul><details><summary>Software development; Testing; Gaming Industry - Binary data transformations</summary>
+  If you need to manipulate binary data frequently and want to automate these changes, bpatch could simplify this process
+</details></ul>
+<ul><details><summary>Automated Build and Deployment Pipelines</summary>
+  bpatch can be part of Continuous Integration/Continuous Deployment (CI/CD) pipelines to handle the transformation of binary data as part of the build or deployment process
+</details></ul>
+<ul><details><summary>Software development - using of the bpatch as static library</summary>
+  Developers can integrate bpatch as static library into their applications to handle binary data flows
+</details></ul>
+<hr/>
 **MNEMONIC:** binary stream, substitution, sequential substitution, encryption, compression, binary data conversion
 
 * [`bpatch`](#bpatch)
@@ -22,8 +40,8 @@ The console application enables the transformation of files in binary form, adhe
 
 ## Description
 
-`bpatch` is an application designed to transform a file's data based on customizable replacement rules. These rules are conveniently outlined in the universally recognized [JSON] format. The truly powerful feature of `bpatch` lies in its flexibility, allowing for various byte sequences to be set according to user preference. Additionally, it provides a robust choice of replacement modes; offering sequential, parallel, and mixed modes to cater to all possible data manipulation needs. You can familiarize yourself with the application's user manual by running it without any parameters. Alternatively, you can explore the [`consoleparametersreader.cpp`][consoleparametersreader_cpp] file to understand the code base.
- 
+ `bpatch` is an application designed to transform a file's data based on easily readable and editable replacement rules. These rules are established in [JSON] format. Functionality provides sequential, parallel, and mixed modes to perform all possible data manipulation needs. Investigate [`bpatch_json.md`][bpatch_json_md] to acquire more details of the current set of possibilities 
+
 ## File Descriptions
 
 The `bpatch` package exposes next group of files to user:
@@ -126,6 +144,8 @@ Feel free to use email bpatchzaytsev@gmail.com along with the title:
 
 [`bpatch.cpp`][bpatch_cpp]
 
+[`bpatch_json.md`][bpatch_json_md]
+
 [`rebuild.cmd`][rebuild.cmd]
 
 [`rebuild.sh`][rebuild.sh]
@@ -217,6 +237,7 @@ Feel free to use email bpatchzaytsev@gmail.com along with the title:
 
 [cmakelists_txt]:./CMakeLists.txt
 [bpatch_cpp]:./bpatch.cpp
+[bpatch_json_md]:./bpatch_json.md
 [rebuild.cmd]:./rebuild.cmd
 [rebuild.sh]:./rebuild.sh
 [actionscollection_cpp]:./srcbpatch/actionscollection.cpp
