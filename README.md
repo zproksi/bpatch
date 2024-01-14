@@ -92,7 +92,6 @@ are being used by Integration tests.
 Feel free to use the following [JSON] files as samples when creating your own scripts:
 [`choicereplace.json`][choicereplace_json], [`decimal.json`][decimal_json], [`hexadecimal.json`][hexadecimal_json], [`mixed.json`][mixed_json], [`text.json`][text_json], [`withbin.json`][withbin_json], [`tohex.json`][tohex_json], [`fromhex.json`][fromhex_json]
 
-
 ## Building
 
 1. There are two files you can use for rebuilding of the `bpatch`:
@@ -112,7 +111,6 @@ Feel free to use the following [JSON] files as samples when creating your own sc
 1. Upon specifying the folder to generate the MSVS solution or to build under Linux, `cmake` should automatically download Google Tests
 1. If you are unfamiliar with `cmake`, you can also refer to the tips provided at the end of the [`CMakeLists.txt`][cmakelists_txt] file
 
-
 ## Unit Tests
 
 The [unit tests files](#unit-tests) are housed in a separate project, which you can find in the 'testbpatch' subfolder
@@ -124,7 +122,6 @@ The unit tests primarily cover the application's main functionality. A portion o
 Integration tests for the program have been designed as scripts. All required auxiliary files can be found in the 'IntegrationTests' folder. There are scripts both for both Windows [`in_tests.cmd`][in_tests_cmd] and Linux [`in_tests.sh`][in_tests_sh].
 Execute the tests in the console by providing the script with the name of the `bpatch` executable as a parameter. Verify the absence of errors in the console output
 
-
 ## Contacts
 
 Feel free to use email bpatchzaytsev@gmail.com along with the title:
@@ -134,7 +131,6 @@ Feel free to use email bpatchzaytsev@gmail.com along with the title:
    1. bpatch feature request
    1. bpatch support request
    1. bpatch collaboration proposal
-
 
 ## Copyright
 

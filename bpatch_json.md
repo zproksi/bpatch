@@ -13,7 +13,6 @@
     * [todo](#todo)
   * [Reference](#reference)
 
-
 ## Application Console Parameters
 Command format of `bpatch` is defined as follows:
 
