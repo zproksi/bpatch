@@ -22,8 +22,10 @@ Domains where `bpatch` will be surely useful
   Developers can integrate bpatch as static library into their applications to handle binary data flows
 </details></ul>
 <hr/>
-**MNEMONIC:** binary stream, substitution, sequential substitution, encryption, compression, binary data conversion
 
+**MNEMONIC:** binary stream, substitution, sequential substitution, encryption, compression, binary data conversion, Test, Testing, Continuous integration, Cybersequrity, Data migration, Data transformation, Encryption, Binary data transformation, json parsing, C++ code style, C++ 20, application architecture, virtual inheritance, data flow
+
+**Table of Contents:**
 * [`bpatch`](#bpatch)
   * [Description](#description)
   * [File Descriptions](#file-descriptions)
@@ -40,7 +42,7 @@ Domains where `bpatch` will be surely useful
 
 ## Description
 
- `bpatch` is an application designed to transform a file's data based on easily readable and editable replacement rules. These rules are established in [JSON] format. Functionality provides sequential, parallel, and mixed modes to perform all possible data manipulation needs. Investigate [`bpatch_json.md`][bpatch_json_md] to acquire more details of the current set of possibilities 
+`bpatch` is an application designed to transform a file's data based on easily readable and editable replacement rules. These rules are established in [JSON] format. Functionality provides sequential, parallel, and mixed modes to perform all possible data manipulation needs. Investigate [`bpatch_json.md`][bpatch_json_md] to acquire more details of the current set of possibilities 
 
 ## File Descriptions
 
