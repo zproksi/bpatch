@@ -35,7 +35,7 @@ FileProcessing::FileProcessing(const char* fname, const char* mode)
     buff_.resize(SZBUFF_FC);
     if (setvbuf(stream_, buff_.data(), _IOFBF, SZBUFF_FC) != 0)
     {
-        perror("Warning: buff_ering for file processing has not initialized.");
+        perror("Warning: buffering for file processing has not been initialized.");
     }
 }
 
@@ -57,7 +57,11 @@ ReadFileProcessing::ReadFileProcessing(const char* fname, const char* mode)
 
 span<char> ReadFileProcessing::ReadData(const span<char> place)
 {
-    const size_t readed = fread(place.data(), sizeof(*place.data()), place.size(), stream_);
+#ifdef __linux__
+    const size_t readed = fread_unlocked(place.data(), sizeof(*place.data()), place.size(), stream_);
+#else
+    const size_t readed = _fread_nolock(place.data(), sizeof(*place.data()), place.size(), stream_);
+#endif
     readedAmount_ += readed;
 
     eof_ = feof(stream_) != 0;
@@ -95,7 +99,11 @@ size_t WriteFileProcessing::Written() const noexcept
 
 size_t WriteFileProcessing::WriteAndThrowIfFail(const string_view& sv)
 {
-    const size_t written = fwrite(sv.data(), sizeof(sv.data()[0]), sv.size(), stream_);
+#ifdef __linux__
+    const size_t written = fwrite_unlocked(sv.data(), sizeof(sv.data()[0]), sv.size(), stream_);
+#else
+    const size_t written = _fwrite_nolock(sv.data(), sizeof(sv.data()[0]), sv.size(), stream_);
+#endif
     if (written != sv.size())
     {
         throw filesystem_error(fio_errors[1], error_code());
