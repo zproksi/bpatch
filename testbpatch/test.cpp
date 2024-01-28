@@ -1,6 +1,243 @@
 #include "pch.h"
 #include <gtest/gtest.h>
 
+#ifdef __linux__
+#include <unistd.h>
+#else
+#include <tchar.h>
+#include <windows.h>
+#endif 
+
+
+namespace
+{
+    const std::string_view everythingSV("*");
+    using bpatch::emptySV;
+};
+
+/// <summary>
+///  same mask & deifferent folders return true
+/// </summary>
+TEST(WildCharacters, ProcessingValidTrue)
+{
+    using namespace wildcharacters;
+    using namespace std;
+    struct
+    {
+        string_view src;
+        string_view dst;
+    }
+    okMask[] =
+    {
+#ifdef __linux__
+        {R"(/Users/Bobby/kon?e?.txt)", R"(./kon?e?.txt)"}
+        , {R"(../Bobby/kon*e*.*)", R"(../kon*e*.*)"}
+        , {R"(kon*e*.*)", R"(./kon*e*.*)"}
+        , {R"(?e_.*)", R"(brouny/?e_.*)"}
+        , {R"(*.*)", R"(anything/*.*)"}
+        , {R"(*.???)", R"(../triple/*.???)"}
+        , {R"(.*)", R"(specific/.*)"}
+        , {R"(/*.*)", R"(uplevel/*.*)"}
+        , {R"(./../*.???)", R"(./deeper/*.???)"}
+        , {R"(*.)", R"(noext/*.)"}
+        , {R"(*)", R"(everything/*)"}
+#else
+        {R"(c:\Users\Bobby\kon?e?.txt)", R"(here\kon?e?.txt)"}
+        , {R"(..\Bobby\kon*e*.*)", R"(..\kon*e*.*)"}
+        , {R"(kon*e*.*)", R"(.\kon*e*.*)"}
+        , {R"(?e_.*)", R"(brouny\?e_.*)"}
+        , {R"(*.*)", R"(anything\*.*)"}
+        , {R"(*.???)", R"(..\triple\*.???)"}
+        , {R"(*.)", R"(specific\*.)"}
+        , {R"(\*.*)", R"(uplevel\*.*)"}
+        , {R"(.\..\*.???)", R"(.\deeper\*.???)"}
+        , {R"(c:*.)", R"(wellthisalso\*.)"}
+        , {R"(*)", R"(everything\*)"}
+#endif
+    };
+
+    for (auto&& item: okMask)
+    {
+        LookUp lup;
+        EXPECT_TRUE(lup.RegisterSourceAndDestination(item.src, item.dst));
+    }
+}
+
+/// <summary>
+///  same folder and mask - return false
+/// </summary>
+TEST(WildCharacters, ProcessingValidFalse)
+{
+    using namespace wildcharacters;
+    using namespace std;
+    struct
+    {
+        string_view src;
+        string_view dst;
+    }
+    okMask[] =
+    {
+#ifdef __linux__
+        {R"(/Users/Bobby/kon?e?.txt)", R"(/Users/Bobby/kon?e?.txt)"}
+        , {R"(./../*.???)", R"(./../*.???)"}
+        , {R"(*.*)", R"(*.*)"}
+#else
+        {R"(c:\Users\Bobby\kon?e?.txt)", R"(c:\Users\Bobby\kon?e?.txt)"}
+        , {R"(.\..\*.???)", R"(.\..\*.???)"}
+        , {R"(*.*)", R"(*.*)"}
+#endif
+    };
+
+    for (auto&& item : okMask)
+    {
+        LookUp lup;
+        EXPECT_FALSE(lup.RegisterSourceAndDestination(item.src, item.dst));
+    }
+}
+
+
+/// <summary>
+///  must throw if wild characters in path
+///  must throw if mask mismatch
+/// </summary>
+TEST(WildCharacters, ProcessingInvalid)
+{
+    using namespace wildcharacters;
+    using namespace std;
+    struct
+    {
+        string_view src;
+        string_view dst;
+    }
+    badMask[] =
+    {
+#ifdef __linux__
+        {R"(/Users/Bo?by/kon?e?.txt)", emptySV}
+        , {R"(../Bo*by/kon*e*.*)", emptySV}
+        , {R"(*/kon*e*.*)", emptySV}
+        , {R"(?/e_.*)", emptySV}
+        , {R"(./*/*.???)", emptySV}
+        , {R"(./?/*.)", emptySV}
+        , {everythingSV, R"(/Users/Bo?by/kon?e?.txt)"}
+        , {everythingSV, R"(../Bo*by/kon*e*.*)"}
+        , {everythingSV, R"(*/kon*e*.*)"}
+        , {everythingSV, R"(?/e_.*)"}
+        , {everythingSV, R"(./*/*.???)"}
+        , {everythingSV, R"(./?/*.)"}
+        , {R"(./?/.*)", R"(./?/*.)"}
+        , {R"(./a/???)", R"(./b/*)"}
+#else
+        {R"(c:\Users\Bo?by\kon?e?.txt)", emptySV}
+        , {R"(..\Bo*by\kon*e*.*)", emptySV}
+        , {R"(*\kon*e*.*)", emptySV}
+        , {R"(?\e_.*)", emptySV}
+        , {R"(.\*\*.???)", emptySV}
+        , {R"(.\?\*.)", emptySV}
+        , {everythingSV, R"(c:\Users\Bo?by\kon?e?.txt)"}
+        , {everythingSV, R"(..\Bo*by\kon*e*.*)"}
+        , {everythingSV, R"(*\kon*e*.*)"}
+        , {everythingSV, R"(?\e_.*)"}
+        , {everythingSV, R"(.\*\*.???)"}
+        , {everythingSV, R"(.\?\*.)"}
+        , {R"(.\?\.*)", R"(.\?\*.)"}
+        , {R"(.\a\???)", R"(.\b\*)"}
+#endif
+    };
+
+    for (auto&& item : badMask)
+    {
+        LookUp lup;
+        EXPECT_THROW(lup.RegisterSourceAndDestination(item.src, item.dst), std::logic_error);
+    }
+}
+
+/// <summary>
+///  must throw if wild characters in path
+///  must throw if mask mismatch
+/// </summary>
+TEST(WildCharacters, SearchingTests)
+{
+    // get full path for executable
+#ifdef __linux__
+    char pathBuffer[PATH_MAX] = {0};
+    [[maybe_unused]] auto result = readlink(R"(/proc/self/exe)", pathBuffer, PATH_MAX);
+#else
+    TCHAR pathBuffer[MAX_PATH] = {0};
+    GetModuleFileName(nullptr, pathBuffer, MAX_PATH);
+#endif
+
+    using namespace wildcharacters;
+    using namespace std;
+
+    filesystem::path pathTestFolder(pathBuffer);
+    pathTestFolder = pathTestFolder.parent_path();
+
+#ifdef __linux__
+#else
+    pathTestFolder /= ".."; // creation of Debug or Release subfolder is Window's 'EVERYTHING'
+#endif
+
+    pathTestFolder = pathTestFolder / "fortesting";
+
+    struct
+    {
+        string_view src;
+        size_t nMatches;
+    }
+    arrToCheck[] =
+    {
+        {"*.*", 4}
+        , {"*", 8}
+        , {"*.", 0}
+        , {".*", 0}
+        , {"?", 1}
+        , {"?.", 0}
+        , {"?.*", 1}
+        , {"a?", 1}
+        , {"a?*.*", 3}
+        , {"a?b", 1}
+        , {"a?b*", 4}
+        , {"?eb*", 4}
+        , {"?eb*.*", 2}
+        , {"*e*c*", 2}
+        , {"*e*c*.*", 1}
+        , {"ae.txt", 1}
+    };
+
+    ///
+    for (auto&& item : arrToCheck)
+    {
+        for (size_t k = 0; k < 4; ++k)
+        {
+            filesystem::path sourceMask = pathTestFolder / item.src;
+            filesystem::path destinationMask;
+            switch (k % 3)
+            {
+            case 0: destinationMask = pathTestFolder / "k";
+                break;
+            case 1: destinationMask = pathTestFolder / "k" / item.src;
+                break;
+            case 2: destinationMask = pathTestFolder / item.src;
+                break;
+            };
+
+            LookUp lup;
+
+            lup.RegisterSourceAndDestination(sourceMask.string(), destinationMask.string());
+
+            size_t count = 0;
+            string srcFilename;
+            string dstFilename;
+            while (lup.NextFilenamesPair(srcFilename, dstFilename))
+            {
+                ++count;
+            }
+            EXPECT_EQ(count, item.nMatches);
+        }
+    }
+
+};
+
 /// <summary>
 ///   put data from binary lexeme to vector
 /// </summary>
@@ -114,7 +351,7 @@ TEST(BinaryLexeme, Replaces)
 /// <summary>
 ///   valid json data should not be the problem untill we have outher array
 /// </summary>
-TEST(BinaryLexeme, JsonParserValid)
+TEST(JSON, JsonParserValid)
 {
     // case with/without white spaces around json
     std::string_view jsonValid[] = {
@@ -141,7 +378,7 @@ TEST(BinaryLexeme, JsonParserValid)
 /// <summary>
 ///   invalid json data should throws only std::logic_error exceptions
 /// </summary>
-TEST(BinaryLexeme, JsonParserInvalid)
+TEST(JSON, JsonParserInvalid)
 {
     std::string_view jsonInvalid[] = {
         R"({)"
@@ -178,7 +415,7 @@ TEST(BinaryLexeme, JsonParserInvalid)
 /// <summary>
 ///   actions processing throws std::runtime_error only
 /// </summary>
-TEST(BinaryLexeme, ActionsProcessingInvalid)
+TEST(ACollection, ActionsProcessingInvalid)
 {
     std::string_view jsonActionsInvalid[] = {
         // 256 is not valid for us
@@ -300,7 +537,7 @@ namespace // for emulate writer
 ///   actions processing - check input and output
 /// </summary>
 /// 
-TEST(BinaryLexeme, ActionsProcessing)
+TEST(ACollection, ActionsProcessing)
 {
     TestData arrTests[] = {
         { // test with sequential replacement 112 -> 22 -> 3
@@ -475,7 +712,7 @@ TEST(BinaryLexeme, ActionsProcessing)
 ///  will provide the same result
 /// </summary>
 /// 
-TEST(BinaryLexeme, MultipleUsageOfProcessing)
+TEST(ACollection, MultipleUsageOfProcessing)
 {
     TestData arrTests[] = {
         {
