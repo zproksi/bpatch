@@ -50,6 +50,13 @@ unique_ptr<ActionsCollection> CreateActionsFile(string_view actionsFileName)
 }
 
 
+/// <summary>
+/// Setup processing chain for ActionsCollection with Writer
+///   Using Reader to read data and send data to Actions collection
+/// </summary>
+/// <param name="todo">Processing engine - actions collections</param>
+/// <param name="pReader">reading of data from file</param>
+/// <param name="pWriter">writing data to file</param>
 void DoReadReplaceWrite(unique_ptr<ActionsCollection>& todo, Reader* const pReader, Writer* const pWriter)
 {
     using namespace std;
@@ -74,6 +81,12 @@ void DoReadReplaceWrite(unique_ptr<ActionsCollection>& todo, Reader* const pRead
 }
 
 
+/// <summary>
+///   Deside if the file will be processed inplace or as source + target
+/// Creates Reader and Writer. And proceed futher to DoReadReplaceWrite
+/// </summary>
+/// <param name="jobInfo">description of the files pair and todo object</param>
+/// <returns>true if actual processing happend</returns>
 bool ProcessTheFile(FileProcessingInfo& jobInfo)
 {
     using namespace std;
@@ -124,7 +137,12 @@ bool ProcessTheFile(FileProcessingInfo& jobInfo)
 }
 
 
-
+/// <summary>
+///  Wild charactes processing level.
+/// ActionsCollection will be created here
+/// </summary>
+/// <param name="jobInfo">parameters from command string</param>
+/// <returns>true; or throws</returns>
 bool ProcessFilesByMask(ProcessingInfo& jobInfo)
 {
     using namespace std;
@@ -161,11 +179,15 @@ bool ProcessFilesByMask(ProcessingInfo& jobInfo)
     return true;
 }
 
+namespace
+{
+    bpatch::ConsoleParametersReader parametersReader;
+};
 
-bpatch::ConsoleParametersReader parametersReader;
-
-
-
+/// <summary>
+///   Entry point of library
+/// All exceptions handling must be only here
+/// </summary>
 bool Processing(int argc, char* argv[])
 {
     TimeMeasurer fulltime("Processing took");

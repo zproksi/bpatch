@@ -3,6 +3,8 @@ buildLinuxDebug/
 buildLinuxRelease/
 buildWinDebug/
 buildWinRelease/
+build/
+.vscode/
 x64/
 
 #here you can hold whatever helper scripts and files you want

@@ -110,7 +110,15 @@ namespace wildcharacters
         // generate regex - get iterator
         if (!searchIt_)
         {
-            searchIt_.reset(new std::filesystem::directory_iterator(std::filesystem::path(srcFolder_)));
+            std::error_code ec;
+            searchIt_.reset(new std::filesystem::directory_iterator(std::filesystem::path(srcFolder_) / ".", ec));
+            if (ec.value())
+            {
+                std::stringstream ss;
+                ss << "Failed to iterate through folder '" << srcFolder_ << "': " << ec.message();
+                throw std::logic_error(ss.str());
+            }
+
             GenerateRegularExpression(srcMask_, regexMask_);
             if (dstFolder_.empty())
             {
