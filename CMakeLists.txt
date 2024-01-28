@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.19)
 set(pname bpatch)
+set(wild_library wildcharacters)
 project(${pname})
 
 ##get google test
@@ -66,6 +67,7 @@ message(STATUS "CMAKE_CXX_FLAGS:" ${CMAKE_CXX_FLAGS})
 # Set Release and Debug configurations
 set(CMAKE_CONFIGURATION_TYPES "Release;Debug" CACHE STRING "Configurations" FORCE)
 
+include_directories(${wild_library})
 include_directories(src${pname})
 
 # Source files
@@ -105,10 +107,11 @@ else()
 
 endif()
 
+add_subdirectory(${wild_library})
 add_subdirectory(src${pname})
 add_subdirectory(test${pname})
 
-target_link_libraries(${pname} src${pname})
+target_link_libraries(${pname} src${pname} ${wild_library})
 
 # Console commands for building on Windows with Visual Studio
 # !!!!!!!!!!!!!

@@ -13,7 +13,8 @@ R"(bpatch -s SOURCE -a ACTIONS [-d/-w DEST] [-fa AFN] [-fb BFFN]
                   changed if no -d/-w parameter provided
   -w DEST         use -w to force override result file
      all parameters are case insencitive (-w is the same as -W)
-     no wild characters allowed
+     Wild characters * and ? allowed for mass files processing, but
+     for Linux remember about shell globbing: use quotes "src/*"
   -h, ?,
   --help, /h      for this help
 

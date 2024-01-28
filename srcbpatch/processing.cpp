@@ -1,11 +1,12 @@
-#include "stdafx.h"
 #include "actionscollection.h"
 #include "binarylexeme.h"
+#include "bpatchfolders.h"
 #include "consoleparametersreader.h"
 #include "fileprocessing.h"
 #include "processing.h"
+#include "stdafx.h"
 #include "timemeasurer.h"
-#include "bpatchfolders.h"
+#include "wildcharacters.h"
 
 
 namespace bpatch
@@ -19,10 +20,19 @@ namespace
         std::string_view file_source = "";
         std::string_view file_target = "";
         std::string_view file_actions = "";
-        size_t readed = 0;
-        size_t written = 0;
         bool overwrite = false;
     };
+
+    struct FileProcessingInfo
+    {
+        std::unique_ptr<ActionsCollection>& todo;
+        std::string& src;
+        std::string& dst;
+        const bool overwrite;
+        size_t readed;
+        size_t written;
+    };
+
 };
 
 
@@ -40,6 +50,13 @@ unique_ptr<ActionsCollection> CreateActionsFile(string_view actionsFileName)
 }
 
 
+/// <summary>
+/// Setup processing chain for ActionsCollection with Writer
+///   Using Reader to read data and send data to Actions collection
+/// </summary>
+/// <param name="todo">Processing engine - actions collections</param>
+/// <param name="pReader">reading of data from file</param>
+/// <param name="pWriter">writing data to file</param>
 void DoReadReplaceWrite(unique_ptr<ActionsCollection>& todo, Reader* const pReader, Writer* const pWriter)
 {
     using namespace std;
@@ -53,7 +70,6 @@ void DoReadReplaceWrite(unique_ptr<ActionsCollection>& todo, Reader* const pRead
     adata.resize(SZBUFF_FC);
     const span dataHolder(adata.data(), SZBUFF_FC);
 
-
     do
     {
         auto fullSpan = pReader->ReadData(dataHolder);
@@ -65,33 +81,31 @@ void DoReadReplaceWrite(unique_ptr<ActionsCollection>& todo, Reader* const pRead
 }
 
 
-bool ProcessTheFile(ProcessingInfo& jobInfo)
+/// <summary>
+///   Deside if the file will be processed inplace or as source + target
+/// Creates Reader and Writer. And proceed futher to DoReadReplaceWrite
+/// </summary>
+/// <param name="jobInfo">description of the files pair and todo object</param>
+/// <returns>true if actual processing happend</returns>
+bool ProcessTheFile(FileProcessingInfo& jobInfo)
 {
     using namespace std;
-    /// --------------------------------------------------------
-    /// load Actions and initialize processing class
-    /// Json parsing is inside
-    unique_ptr<ActionsCollection> todo = CreateActionsFile(jobInfo.file_actions);
-
     /// --------------------------------------------------------
     /// if source and target file are the same
     /// -- processing inplace --
     /// 
-    if (jobInfo.file_source.data() == jobInfo.file_target.data()
-        ||
-        ranges::equal(jobInfo.file_source, jobInfo.file_target)
-        )
+    if (0 == jobInfo.src.compare(jobInfo.dst))
     {
         {
-            ReadWriteFileProcessing rwProcessing(jobInfo.file_source.data());
-            DoReadReplaceWrite(todo, &rwProcessing, &rwProcessing);
+            ReadWriteFileProcessing rwProcessing(jobInfo.src.c_str());
+            DoReadReplaceWrite(jobInfo.todo, &rwProcessing, &rwProcessing);
             jobInfo.written = rwProcessing.Written();
             jobInfo.readed = rwProcessing.Readed();
         } // close file
 
         // set file size
         // because we can write less than read
-        filesystem::resize_file(jobInfo.file_source, jobInfo.written);
+        filesystem::resize_file(jobInfo.src.c_str(), jobInfo.written);
         return true; // inplace processing has been done
     }
 
@@ -102,18 +116,19 @@ bool ProcessTheFile(ProcessingInfo& jobInfo)
     /// 
     error_code ec;
     if (!jobInfo.overwrite &&
-        filesystem::exists(jobInfo.file_target, ec))
+        filesystem::exists(jobInfo.dst, ec))
     { // check override possibility
-        stringstream ss;
-        ss << "Target file '" << jobInfo.file_target << "' exists. "
-            "Use /w instead of /t to ovewrite.";
-        throw runtime_error(ss.str().c_str());
+        std::cout << "Warning: Target file '" << jobInfo.dst << "' exists. "
+            "Use /w instead of /t to ovewrite.\n Processing skipped\n";
+        jobInfo.written = 0;
+        jobInfo.readed = 0;
+        return false;
     }
 
-    WriteFileProcessing writer(jobInfo.file_target.data());
-    ReadFileProcessing reader(jobInfo.file_source.data());
+    ReadFileProcessing reader(jobInfo.src.c_str());
+    WriteFileProcessing writer(jobInfo.dst.c_str());
 
-    DoReadReplaceWrite(todo, &reader, &writer);
+    DoReadReplaceWrite(jobInfo.todo, &reader, &writer);
     // we do not resize file here because we have opened/created file only for writing
     jobInfo.written = writer.Written();
     jobInfo.readed = reader.Readed();
@@ -121,10 +136,58 @@ bool ProcessTheFile(ProcessingInfo& jobInfo)
     return true;
 }
 
-bpatch::ConsoleParametersReader parametersReader;
 
+/// <summary>
+///  Wild charactes processing level.
+/// ActionsCollection will be created here
+/// </summary>
+/// <param name="jobInfo">parameters from command string</param>
+/// <returns>true; or throws</returns>
+bool ProcessFilesByMask(ProcessingInfo& jobInfo)
+{
+    using namespace std;
+    cout << "Actions file:         '" << jobInfo.file_actions << "'\n";
 
+    /// --------------------------------------------------------
+    /// load Actions and initialize processing class
+    /// Json parsing is inside
+    unique_ptr<ActionsCollection> todo = CreateActionsFile(jobInfo.file_actions);
 
+    // look up logic for files
+    wildcharacters::LookUp lup;
+    lup.RegisterSourceAndDestination(jobInfo.file_source, jobInfo.file_target);
+    string srcFilename; // source file name
+    string dstFilename; // destination file name
+
+    size_t filesProcessed = 0;
+    FileProcessingInfo fileInfo{.todo = todo, .src = srcFilename, .dst = dstFilename, .overwrite = jobInfo.overwrite};
+    while (lup.NextFilenamesPair(srcFilename, dstFilename)) // request file names
+    {
+        std::cout << "Source file:          '" << fileInfo.src << "'\n";
+        std::cout << "Target file:          '" << fileInfo.dst << "'\n";
+        if (bpatch::ProcessTheFile(fileInfo))
+        {
+            ++filesProcessed;
+        }
+
+        std::cout << "Readed (bytes):       '" << fileInfo.readed << "'\n";
+        std::cout << "Written (bytes):      '" << fileInfo.written << "'\n";
+        std::cout << "\n";
+    };
+    std::cout << "Files processed:      '" << filesProcessed << "'\n";
+
+    return true;
+}
+
+namespace
+{
+    bpatch::ConsoleParametersReader parametersReader;
+};
+
+/// <summary>
+///   Entry point of library
+/// All exceptions handling must be only here
+/// </summary>
 bool Processing(int argc, char* argv[])
 {
     TimeMeasurer fulltime("Processing took");
@@ -138,10 +201,10 @@ bool Processing(int argc, char* argv[])
     try
     {
         std::cout << "\n";
-        std::cout << "Executable:         '" << argv[0] << "'\n";
-        std::cout << "Current folder:     '" << std::filesystem::current_path() << "'\n";
-        std::cout << "Actions folder:     '" << FolderActions() << "'\n";
-        std::cout << "Binary data folder: '" << FolderBinaryPatterns() << "'\n";
+        std::cout << "Executable:           '" << argv[0] << "'\n";
+        std::cout << "Current folder:       '" << std::filesystem::current_path() << "'\n";
+        std::cout << "Actions folder:       '" << FolderActions() << "'\n";
+        std::cout << "Binary data folder:   '" << FolderBinaryPatterns() << "'\n";
 
         ProcessingInfo jobInfo{
             .file_source = parametersReader.Source(),
@@ -150,15 +213,7 @@ bool Processing(int argc, char* argv[])
             .overwrite = parametersReader.Overwrite()
         };
 
-        std::cout << "Source file:        '" << jobInfo.file_source << "'\n";
-        std::cout << "Actions file:       '" << jobInfo.file_actions << "'\n";
-        std::cout << "Target file:        '" << jobInfo.file_target << "'\n";
-
-        retValue = bpatch::ProcessTheFile(jobInfo);
-
-        std::cout << "Readed (bytes):     '" << jobInfo.readed << "'\n";
-        std::cout << "Written (bytes):    '" << jobInfo.written << "'\n";
-        std::cout << "\n";
+        retValue = bpatch::ProcessFilesByMask(jobInfo);
     }
     catch (std::filesystem::filesystem_error const& ex)
     {

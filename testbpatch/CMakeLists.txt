@@ -18,6 +18,7 @@ set(HEADER_FILES
 )
 
 include_directories(../src${pname})
+include_directories(../wildcharacters)
 
 # Define the executable target
 add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${HEADER_FILES})
@@ -32,5 +33,21 @@ endif()
 # Precompiled header
 target_precompile_headers(${PROJECT_NAME} PRIVATE pch.h)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE src${pname} gtest_main gmock_main)
+target_link_libraries(${PROJECT_NAME} PRIVATE wildcharacters src${pname} gtest_main gmock_main)
+
+###################################
+##         for unit tests        ##
+###################################
+# Create the folder
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/fortesting)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/fortesting/k)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/fortesting/keb)
+# List of file names
+set(FILENAMES a ae aeb aebc a.txt ae.txt aeb.txt aebc.txt)
+
+# Write each file with 'A' as its content
+foreach(FILENAME IN LISTS FILENAMES)
+    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/fortesting/${FILENAME} "A")
+endforeach()
+
 
