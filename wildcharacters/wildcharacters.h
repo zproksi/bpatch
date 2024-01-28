@@ -10,8 +10,6 @@
 
 namespace wildcharacters
 {
-    bool TestExecution(int argc, char* argv[]);
-
     /// <summary>
     ///   class for processing source file name or sourse mask and destination file (folder) name
     ///  case 1: source file name is exactly name + destination file name is exactly name
@@ -48,28 +46,6 @@ namespace wildcharacters
         ///   for the case of in place processing</param>
         /// <returns>true if we found next pair for processing; false if no more files for processing</returns>
         bool NextFilenamesPair(std::string& sourceFile, std::string& destinationFile);
-
-        /// <summary>
-        ///   generates target filename given full(or partial) path with filename
-        ///  and foldername where new file should be
-        /// </summary>
-        /// <param name="originalFilename">full(or partial) path with filename</param>
-        /// <param name="foldername">name of the folder where we should generate new file</param>
-        /// <param name="resultFilename">full file name in "foldername" to be filled up</param>
-        static void GenerateFilenameInFolder(
-            const std::string& originalFilename
-            , const std::string& foldername
-            , std::string& resultFilename
-        );
-
-        /// <summary>
-        ///   generates regex from a file name with wild characters
-        /// </summary>
-        /// <param name="mask">a file name with wild characters</param>
-        /// <param name="result">reges variable to fill</param>
-        /// <returns>true if mask contains wild chracter(s) '*', '?',
-        ///  false if no wild characters found</returns>
-        static bool GenerateRegularExpression(const std::string& mask, std::regex& result);
 
     protected:
         /// <summary>

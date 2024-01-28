@@ -1,30 +1,80 @@
-#include <algorithm>
-#include <cctype>
-#include <charconv>
-#include <cstdio>
-#include <cstdlib>
-#include <exception>
 #include <filesystem>
-#include <future>
-#include <iostream>
-#include <iterator>
-#include <limits>
-#include <map>
-#include <memory>
-#include <ranges>
-#include <span>
-#include <sstream>
-#include <stdexcept>
-#include <system_error>
-#include <unordered_map>
-#include <utility>
-#include <vector>
-
-
 #include "wildcharacters.h"
 
 namespace wildcharacters
 {
+    /// <summary>
+    ///   generates target filename given full(or partial) path with filename
+    ///  and foldername where new file should be
+    /// </summary>
+    /// <param name="originalFilename">full(or partial) path with filename</param>
+    /// <param name="foldername">name of the folder where we should generate new file</param>
+    /// <param name="resultFilename">full file name in "foldername" to be filled up</param>
+    void GenerateFilenameInFolder(const std::string& originalFilename, const std::string& foldername, std::string& resultFilename)
+    {
+        std::filesystem::path originalPath(originalFilename);
+
+        // Get filename from original path
+        std::string filename = originalPath.filename().string();
+
+        // Append filename to the foldername
+        std::filesystem::path folderPath(foldername);
+        folderPath /= filename;
+
+        // Set resultFilename
+        resultFilename = folderPath.string();
+    }
+
+
+    /// <summary>
+    ///   generates regex from a file name with wild characters
+    /// </summary>
+    /// <param name="mask">a file name with wild characters</param>
+    /// <param name="result">reges variable to fill</param>
+    /// <returns>true if mask contains wild chracter(s) '*', '?',
+    ///  false if no wild characters found</returns>
+    bool GenerateRegularExpression(const std::string& mask, std::regex& result)
+    {
+        // Check for wildcard characters
+        if (mask.find_first_of("*?") == std::string::npos)
+            return false;
+
+        std::string regexStr;
+
+        for (char c : mask) {
+            switch (c) {
+            case '*':
+                regexStr += ".*";
+                break;
+            case '?':
+                regexStr += "[^/]";    // Adjusting handling for '?'
+                break;
+            case '+':
+            case '(':
+            case ')':
+            case '|':
+            case '^':
+            case '$':
+            case '.':
+            case '{':
+            case '}':
+            case '\\':
+                // These are special characters in a regexStr, they need to be escaped
+                regexStr += '\\';
+            default:
+                // Everything else is okay
+                regexStr += c;
+                break;
+            }
+        }
+
+        // Assign result
+        result = std::regex(regexStr, std::regex::ECMAScript);
+
+        return true;
+    }
+
+
     bool LookUp::RegisterSourceAndDestination(const std::string_view& src_, const std::string_view& dst_)
     {
         auto initialExtraction = [](const std::string_view& a_, std::string& apath, std::string& aname)
@@ -149,62 +199,6 @@ namespace wildcharacters
 
         status_ = MODE_WORK_DONE;
         return false;
-    }
-
-    void LookUp::GenerateFilenameInFolder(const std::string& originalFilename, const std::string& foldername, std::string& resultFilename)
-    {
-        std::filesystem::path originalPath(originalFilename);
-
-        // Get filename from original path
-        std::string filename = originalPath.filename().string();
-
-        // Append filename to the foldername
-        std::filesystem::path folderPath(foldername);
-        folderPath /= filename;
-
-        // Set resultFilename
-        resultFilename = folderPath.string();
-    }
-
-    bool LookUp::GenerateRegularExpression(const std::string& mask, std::regex& result)
-    {
-        // Check for wildcard characters
-        if (mask.find_first_of("*?") == std::string::npos)
-            return false;
-
-        std::string regexStr;
-
-        for (char c : mask) {
-            switch (c) {
-            case '*':
-                regexStr += ".*";
-                break;
-            case '?':
-                regexStr += "[^/]";    // Adjusting handling for '?'
-                break;
-            case '+':
-            case '(':
-            case ')':
-            case '|':
-            case '^':
-            case '$':
-            case '.':
-            case '{':
-            case '}':
-            case '\\':
-                // These are special characters in a regexStr, they need to be escaped
-                regexStr += '\\';
-            default:
-                // Everything else is okay
-                regexStr += c;
-                break;
-            }
-        }
-
-        // Assign result
-        result = std::regex(regexStr, std::regex::ECMAScript);
-
-        return true;
     }
 
 }// wildcharacters
