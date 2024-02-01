@@ -3,6 +3,7 @@
 #include "binarylexeme.h"
 #include "dictionary.h"
 #include "dictionarykeywords.h"
+#include "coloredconsole.h"
 #include "fileprocessing.h"
 #include "jsonparser.h"
 #include "bpatchfolders.h"
@@ -449,7 +450,7 @@ void ActionsCollection::CreateChainOfReplacers()
         if (nReplaces < 1)
         {
             // replacements not found - actually good place for warning
-            std::cout << "Warning: empty json \"replace\" object detected."<< std::endl;
+            std::cout << coloredconsole::toconsole("Warning: empty json \"replace\" object detected.") << std::endl;
             continue;
         }
 
