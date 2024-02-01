@@ -10,6 +10,7 @@ set(SOURCE_FILES
     actionscollection.cpp
     binarylexeme.cpp
     bpatchfolders.cpp
+    coloredconsole.cpp
     consoleparametersreader.cpp
     dictionary.cpp
     dictionarykeywords.cpp
@@ -25,6 +26,7 @@ set(HEADER_FILES
     actionscollection.h
     binarylexeme.h
     bpatchfolders.h
+    coloredconsole.h
     consoleparametersreader.h
     dictionary.h
     dictionarykeywords.h

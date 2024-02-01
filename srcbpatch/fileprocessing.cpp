@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "coloredconsole.h"
 #include "fileprocessing.h"
 
 namespace
@@ -35,7 +36,7 @@ FileProcessing::FileProcessing(const char* fname, const char* mode)
     buff_.resize(SZBUFF_FC);
     if (setvbuf(stream_, buff_.data(), _IOFBF, SZBUFF_FC) != 0)
     {
-        perror("Warning: buffering for file processing has not been initialized.");
+        std::cout << coloredconsole::toconsole("Warning: buffering for file processing has not been initialized.") << std::endl;
     }
 }
 
@@ -213,7 +214,7 @@ bool ReadFullFile(std::vector<char>& readTo, const char* const fname, const std:
     const size_t szFile = static_cast<size_t>(filesystem::file_size(aName, ec));
     if (ec)
     { // error is not empty
-        std::cout << "Warning: Detection of the size of a file '" << aName << "' returned error '"
+        cout << coloredconsole::toconsole("Warning: Detection of the size of a file '") << aName << "' returned error '"
             << ec.message() << "'" << endl;
     }
 

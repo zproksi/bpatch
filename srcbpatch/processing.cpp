@@ -1,6 +1,7 @@
 #include "actionscollection.h"
 #include "binarylexeme.h"
 #include "bpatchfolders.h"
+#include "coloredconsole.h"
 #include "consoleparametersreader.h"
 #include "fileprocessing.h"
 #include "processing.h"
@@ -118,8 +119,8 @@ bool ProcessTheFile(FileProcessingInfo& jobInfo)
     if (!jobInfo.overwrite &&
         filesystem::exists(jobInfo.dst, ec))
     { // check override possibility
-        std::cout << "Warning: Target file '" << jobInfo.dst << "' exists. "
-            "Use /w instead of /t to ovewrite.\n Processing skipped\n";
+        std::cout << coloredconsole::toconsole("Warning: Target file '") << jobInfo.dst << "' exists. "
+            "Use /w instead of /t to overwrite.\n Processing skipped\n";
         jobInfo.written = 0;
         jobInfo.readed = 0;
         return false;
@@ -184,12 +185,15 @@ namespace
     bpatch::ConsoleParametersReader parametersReader;
 };
 
+
 /// <summary>
 ///   Entry point of library
 /// All exceptions handling must be only here
 /// </summary>
 bool Processing(int argc, char* argv[])
 {
+    using namespace coloredconsole;
+
     TimeMeasurer fulltime("Processing took");
     if (!parametersReader.ReadConsoleParameters(argc, argv))
     {
@@ -217,7 +221,7 @@ bool Processing(int argc, char* argv[])
     }
     catch (std::filesystem::filesystem_error const& ex)
     {
-        std::cerr << "file system ERROR: " << ex.what() << '\n'
+        std::cerr << toconsole("file system ERROR: ") << ex.what() << '\n'
             << "path1: " << ex.path1() << '\n'
             << "path2: " << ex.path2() << '\n'
             << "value: " << ex.code().value() << '\n'
@@ -226,35 +230,35 @@ bool Processing(int argc, char* argv[])
     }
     catch (std::range_error& rExc) // must be before runtime_error
     {
-        std::cerr << "range ERROR: \""
+        std::cerr << toconsole("range ERROR: \"")
             << rExc.what()
             << "\""
             << std::endl;
     }
     catch (std::runtime_error& rExc)
     {
-        std::cerr << "runtime ERROR: \""
+        std::cerr << toconsole("runtime ERROR: \"")
             << rExc.what()
             << "\""
             << std::endl;
     }
     catch (std::out_of_range& rExc) // must be before logic_error
     {
-        std::cerr << "out of range ERROR: \""
+        std::cerr << toconsole("out of range ERROR: \"")
             << rExc.what()
             << "\""
             << std::endl;
     }
     catch (std::logic_error& rExc)
     {
-        std::cerr << "logic ERROR: \""
+        std::cerr << toconsole("logic ERROR: \"")
             << rExc.what()
             << "\""
             << std::endl;
     }
     catch (std::exception& rExc)
     {
-        std::cerr << "ERROR: \""
+        std::cerr << toconsole("ERROR: \"")
             << rExc.what()
             << "\""
             << std::endl;

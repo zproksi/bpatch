@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "binarylexeme.h"
+#include "coloredconsole.h"
 #include "fileprocessing.h"
 #include "streamreplacer.h"
 
@@ -344,6 +345,11 @@ void ChoiceReplacer::DoReplacements(const char toProcess, const bool aEod) const
 }
 
 
+namespace
+{
+    static std::string_view warningDuplicatePattern("Warning: Duplicate pattern to replace found. Second lexeme will be ignored.");
+};
+
 //--------------------------------------------------
 /// <summary>
 ///   replaces for lexemes of the same length
@@ -364,7 +370,7 @@ public:
                     string_view(trg.data(), trg.size()),
                 }); !result.second)
             {
-                cout << "Warning: Duplicate pattern to replace found. Second lexeme will be ignored." << endl;
+                cout << coloredconsole::toconsole(warningDuplicatePattern) << endl;
             }
         }
     }
@@ -437,7 +443,7 @@ public:
             const size_t index = static_cast<size_t>(*(reinterpret_cast<const unsigned char*>(alpair.first->access().data())));
             if (replaces_[index].present_)
             {
-                cout << "Warning: Duplicate pattern to replace found. Second lexeme will be ignored." << endl;
+                cout << coloredconsole::toconsole(warningDuplicatePattern) << endl;
             }
             else
             {
