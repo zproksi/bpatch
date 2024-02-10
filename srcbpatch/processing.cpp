@@ -1,7 +1,6 @@
 #include "actionscollection.h"
 #include "binarylexeme.h"
 #include "bpatchfolders.h"
-#include "coloredconsole.h"
 #include "consoleparametersreader.h"
 #include "fileprocessing.h"
 #include "processing.h"

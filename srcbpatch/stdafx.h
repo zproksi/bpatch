@@ -31,4 +31,6 @@
 #include <variant>
 #include <vector>
 
-
+// this include is here to emphasize that it is restricted for changes
+// however it could be used across whole project
+#include "coloredconsole.h"

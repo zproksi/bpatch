@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "binarylexeme.h"
-#include "coloredconsole.h"
 #include "fileprocessing.h"
 #include "streamreplacer.h"
 
