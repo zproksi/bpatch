@@ -3,7 +3,6 @@
 #include "binarylexeme.h"
 #include "dictionary.h"
 #include "dictionarykeywords.h"
-#include "coloredconsole.h"
 #include "fileprocessing.h"
 #include "jsonparser.h"
 #include "bpatchfolders.h"

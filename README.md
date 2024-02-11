@@ -61,6 +61,7 @@ The `bpatch` package exposes next group of files to user:
 |[`actionscollection.h`][actionscollection_h]| The class **ActionsCollection** serves as the main entry point for processing, housing the JSON parser callback for settings loading, as well as the pipeline for binary lexeme processing. [`actionscollection.cpp`][actionscollection_cpp]|
 |[`binarylexeme.h`][binarylexeme_h]|The **AbstractBinaryLexeme** class encapsulates data; regulates access to the data; offers modification method and static creators. [`binarylexeme.cpp`][binarylexeme_cpp]|
 |[`bpatchfolders.h`][bpatchfolders_h]|Access to the names of *Actions* and *Binary Patterns* folders. [`bpatchfolders.cpp`][bpatchfolders_cpp]|
+|[`coloredconsole.h`][coloredconsole_h]| Templated wrapper for text to output in console <span style="color:red">ERROR</span> in red and <span style="color:yellow">Warning</span> in yellow colors. [`coloredconsole.cpp`][coloredconsole_cpp]|
 |[`consoleparametersreader.h`][consoleparametersreader_h]|The **ConsoleParametersReader** class parses console parameters, stores settings for processing, and maintains a *'manual'* text (could be found in [`consoleparametersreader.cpp`][consoleparametersreader_cpp])|
 |[`dictionary.h`][dictionary_h]|The **Dictionary** class stores binary lexemes for processing and allows name-based access. [`dictionary.cpp`][dictionary_cpp]|
 |[`dictionarykeywords.h`][dictionarykeywords_h]|String views with keywords for [JSON] parsing. [`dictionarykeywords.cpp`][dictionarykeywords_cpp]|
@@ -155,6 +156,9 @@ Feel free to use email bpatchzaytsev@gmail.com along with the title:
 [`binarylexeme.cpp`][binarylexeme_cpp]
 [`binarylexeme.h`][binarylexeme_h]
 
+[`coloredconsole.cpp`][coloredconsole_cpp]
+[`coloredconsole.h`][coloredconsole_h]
+
 [`consoleparametersreader.cpp`][consoleparametersreader_cpp]
 [`consoleparametersreader.h`][consoleparametersreader_h]
 
@@ -242,6 +246,8 @@ Feel free to use email bpatchzaytsev@gmail.com along with the title:
 [actionscollection_h]:./srcbpatch/actionscollection.h
 [binarylexeme_cpp]:./srcbpatch/binarylexeme.cpp
 [binarylexeme_h]:./srcbpatch/binarylexeme.h
+[coloredconsole_cpp]:./srcbpatch/coloredconsole.cpp
+[coloredconsole_h]:./srcbpatch/coloredconsole.h
 [consoleparametersreader_cpp]:./srcbpatch/consoleparametersreader.cpp
 [consoleparametersreader_h]:./srcbpatch/consoleparametersreader.h
 [dictionary_cpp]:./srcbpatch/dictionary.cpp

@@ -1,5 +1,4 @@
 #include "stdafx.h"
-#include "coloredconsole.h"
 #include "fileprocessing.h"
 
 namespace
