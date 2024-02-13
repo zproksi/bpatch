@@ -71,10 +71,10 @@ namespace wildcharacters
         ///   using with whild characters and search
         /// </summary>
         std::unique_ptr<std::filesystem::directory_iterator> searchIt_;
-        std::regex regexMask_;
+        std::regex regexMask_; // to search files with help of mask
 
         /// <summary>
-        ///   switch to true if we have no wild characters and already returned pair for processing
+        ///   switch to MODE_WORK_DONE if we have returned all File name pairs
         /// </summary>
         enum LookUpSTATUS : int
         {

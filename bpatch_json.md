@@ -155,5 +155,6 @@ Big sample of ACTIONS file: [Actions File Sample](#actions-file-sample)
 [JSON]:https://www.json.org/json-en.html
 
 [readme_md]:./README.md
+
 ---
 [`to the Table Of Contents`](#bpatch-application-guide)

@@ -36,7 +36,7 @@ namespace coloredconsole
         Console(T&& value): value_(std::forward<T>(value)) {}
 
         /// <summary>
-        ///  any wrappwed with Console type will have this operator
+        ///  any wrapped with Console type will have this operator
         /// </summary>
         friend std::ostream& operator<<(std::ostream& os, const Console& logger)
         {
