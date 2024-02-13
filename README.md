@@ -31,11 +31,13 @@ Domains where `bpatch` will be surely useful
   * [File Descriptions](#file-descriptions)
     * [Entry Point](#entry-point)
     * [Library with the logic](#library-with-the-logic)
+    * [Library wildcharacters](#wildcharacters-library)
     * [Unit Tests files](#unit-tests-files)
     * [Integration Tests files](#integration-tests-files)
   * [Building](#building)
   * [Unit Tests](#unit-tests)
   * [Integration Tests](#integration-tests)
+  * [Architectural Diagram](#architectural-diagram)
   * [Contacts](#contacts)
   * [Copyright](#copyright)
   * [Reference](#reference)
@@ -72,6 +74,12 @@ The `bpatch` package exposes next group of files to user:
 |[`stdafx.h`][stdafx_h]|Precompiled library header with included standard headers. [`stdafx.cpp`][stdafx_cpp]|
 |[`streamreplacer.h`][streamreplacer_h]|An interface of a replacement chain. [`streamreplacer.cpp`][streamreplacer_cpp]|
 |[`timemeasurer.h`][timemeasurer_h]|The TimeMeasurer class allows for nanosecond time measurement between named program points. [`timemeasurer.cpp`][timemeasurer_cpp]|
+
+### wildcharacters library
+
+|File|Description|
+|:-|:-|
+|[`wildcharacters.h`][wildcharacters_h]| Support of wild characters '*' and '?' in parameters for console application as a static library. [`wildcharacters.cpp`][wildcharacters_cpp]|
 
 ### Unit Tests files
 
@@ -123,6 +131,10 @@ The unit tests primarily cover the application's main functionality. A portion o
 Integration tests for the program have been designed as scripts. All required auxiliary files can be found in the 'IntegrationTests' folder. There are scripts both for Windows [`in_tests.cmd`][in_tests_cmd] and Linux [`in_tests.sh`][in_tests_sh].
 Execute the tests in the console by providing the script with the name of the `bpatch` executable as a parameter. Verify the absence of errors in the console output
 
+## Architectural Diagram
+
+There is an architectural diagram [`bpatch_uml.drawio`](./documentation/bpatch_uml.drawio) in drawio format in the documentation folder. [https://app.diagrams.net/](https://app.diagrams.net/) can be used for view
+
 ## Contacts
 
 Feel free to use email bpatchzaytsev@gmail.com along with the title:
@@ -155,6 +167,9 @@ Feel free to use email bpatchzaytsev@gmail.com along with the title:
 
 [`binarylexeme.cpp`][binarylexeme_cpp]
 [`binarylexeme.h`][binarylexeme_h]
+
+[`bpatchfolders.cpp`][bpatchfolders_cpp]
+[`bpatchfolders.h`][bpatchfolders_h]
 
 [`coloredconsole.cpp`][coloredconsole_cpp]
 [`coloredconsole.h`][coloredconsole_h]
@@ -189,8 +204,8 @@ Feel free to use email bpatchzaytsev@gmail.com along with the title:
 [`timemeasurer.cpp`][timemeasurer_cpp]
 [`timemeasurer.h`][timemeasurer_h]
 
-[`bpatchfolders.cpp`][bpatchfolders_cpp]
-[`bpatchfolders.h`][bpatchfolders_h]
+[`wildcharacters.cpp`][wildcharacters_cpp]
+[`wildcharacters.h`][wildcharacters_h]
 
 ---
 [`pch.cpp`][pch_cpp]
@@ -246,6 +261,8 @@ Feel free to use email bpatchzaytsev@gmail.com along with the title:
 [actionscollection_h]:./srcbpatch/actionscollection.h
 [binarylexeme_cpp]:./srcbpatch/binarylexeme.cpp
 [binarylexeme_h]:./srcbpatch/binarylexeme.h
+[bpatchfolders_cpp]:./srcbpatch/bpatchfolders.cpp
+[bpatchfolders_h]:./srcbpatch/bpatchfolders.h
 [coloredconsole_cpp]:./srcbpatch/coloredconsole.cpp
 [coloredconsole_h]:./srcbpatch/coloredconsole.h
 [consoleparametersreader_cpp]:./srcbpatch/consoleparametersreader.cpp
@@ -268,8 +285,8 @@ Feel free to use email bpatchzaytsev@gmail.com along with the title:
 [streamreplacer_h]:./srcbpatch/streamreplacer.h
 [timemeasurer_cpp]:./srcbpatch/timemeasurer.cpp
 [timemeasurer_h]:./srcbpatch/timemeasurer.h
-[bpatchfolders_cpp]:./srcbpatch/bpatchfolders.cpp
-[bpatchfolders_h]:./srcbpatch/bpatchfolders.h
+[wildcharacters_cpp]:./wildcharacters/wildcharacters.cpp
+[wildcharacters_h]:./wildcharacters/wildcharacters.h
 [pch_cpp]:./testbpatch/pch.cpp
 [pch_h]:./testbpatch/pch.h
 [test_cpp]:./testbpatch/test.cpp
