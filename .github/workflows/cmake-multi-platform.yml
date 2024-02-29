@@ -83,3 +83,18 @@ jobs:
       shell: cmd
       run: .\testbpatch.exe
 
+    - name: Integration Tests on Ubuntu
+      # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
+      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
+      if: matrix.os=='ubuntu-latest'
+      run: |
+        chmod +x IntegrationTests/in_tests.sh
+        ./IntegrationTests/in_tests.sh ${{ steps.strings.outputs.build-output-dir }}/bpatch
+
+    - name: Integration Tests on Windows
+      # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
+      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
+      if: matrix.os=='windows-latest'
+      shell: cmd
+      run: ./IntegrationTests/in_tests.cmd ${{ steps.strings.outputs.build-output-dir }}/${{ matrix.build_type }}/bpatch.exe
+
