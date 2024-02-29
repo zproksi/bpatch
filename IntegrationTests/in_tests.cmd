@@ -51,10 +51,8 @@ for %%F in ("%Folder_Source%\*.test") do (
     echo To execute: '!Command!'
     call :divisor
 
-REM if we use just !Command! we can get "The system cannot find the path specified."
-REM That is why we run command in the separate process
-REM    !Command!
-    start "executing" /MIN /WAIT !Command!
+    REM  start one test
+    call !Command!
 
     REM Compare the output to the expected result
     fc /b %Folder_Expected%\!nameonly!.expected !Dest! >nul
