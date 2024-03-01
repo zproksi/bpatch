@@ -24,11 +24,15 @@ using namespace std::filesystem;
 
 FileProcessing::FileProcessing(const char* fname, const char* mode)
 {
+#if !defined(__linux__) && !(defined(__APPLE__) && defined(__MACH__))
 #pragma warning(disable: 4996) // I would like to use fopen instead of fopen_s, because
                                // 1. I would like to write fast code
                                // 2. MSVS compiler does not respect C++ standard and __STDC_LIB_EXT1__ define
+#endif
     if (stream_ = fopen(fname, mode); nullptr == stream_)
+#if !defined(__linux__) && !(defined(__APPLE__) && defined(__MACH__))
 #pragma warning(default: 4996)
+#endif
     {
         throw filesystem_error(fio_errors[0], filesystem::path(fname), error_code());
     }
@@ -59,6 +63,8 @@ span<char> ReadFileProcessing::ReadData(const span<char> place)
 {
 #ifdef __linux__
     const size_t readed = fread_unlocked(place.data(), sizeof(*place.data()), place.size(), stream_);
+#elif defined(__APPLE__) && defined(__MACH__)
+    const size_t readed = fread(place.data(), sizeof(*place.data()), place.size(), stream_);
 #else
     const size_t readed = _fread_nolock(place.data(), sizeof(*place.data()), place.size(), stream_);
 #endif
@@ -101,6 +107,8 @@ size_t WriteFileProcessing::WriteAndThrowIfFail(const string_view& sv)
 {
 #ifdef __linux__
     const size_t written = fwrite_unlocked(sv.data(), sizeof(sv.data()[0]), sv.size(), stream_);
+#elif defined(__APPLE__) && defined(__MACH__)
+    const size_t written = fwrite(sv.data(), sizeof(sv.data()[0]), sv.size(), stream_);
 #else
     const size_t written = _fwrite_nolock(sv.data(), sizeof(sv.data()[0]), sv.size(), stream_);
 #endif
