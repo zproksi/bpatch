@@ -1,4 +1,4 @@
-#include <filesystem>
+#include <sstream>
 #include "wildcharacters.h"
 
 namespace wildcharacters
