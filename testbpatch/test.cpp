@@ -1,7 +1,7 @@
 #include "pch.h"
 #include <gtest/gtest.h>
 
-#ifdef __linux__
+#if defined(__linux__) || ((defined(__APPLE__) && defined(__MACH__)))
 #include <unistd.h>
 #else
 #include <tchar.h>
@@ -29,7 +29,7 @@ TEST(WildCharacters, ProcessingValidTrue)
     }
     okMask[] =
     {
-#ifdef __linux__
+#if defined(__linux__) || ((defined(__APPLE__) && defined(__MACH__)))
         {R"(/Users/Bobby/kon?e?.txt)", R"(./kon?e?.txt)"}
         , {R"(../Bobby/kon*e*.*)", R"(../kon*e*.*)"}
         , {R"(kon*e*.*)", R"(./kon*e*.*)"}
@@ -77,7 +77,7 @@ TEST(WildCharacters, ProcessingValidFalse)
     }
     okMask[] =
     {
-#ifdef __linux__
+#if defined(__linux__) || ((defined(__APPLE__) && defined(__MACH__)))
         {R"(/Users/Bobby/kon?e?.txt)", R"(/Users/Bobby/kon?e?.txt)"}
         , {R"(./../*.???)", R"(./../*.???)"}
         , {R"(*.*)", R"(*.*)"}
@@ -111,7 +111,7 @@ TEST(WildCharacters, ProcessingInvalid)
     }
     badMask[] =
     {
-#ifdef __linux__
+#if defined(__linux__) || ((defined(__APPLE__) && defined(__MACH__)))
         {R"(/Users/Bo?by/kon?e?.txt)", emptySV}
         , {R"(../Bo*by/kon*e*.*)", emptySV}
         , {R"(*/kon*e*.*)", emptySV}
@@ -158,7 +158,7 @@ TEST(WildCharacters, ProcessingInvalid)
 TEST(WildCharacters, SearchingTests)
 {
     // get full path for executable
-#ifdef __linux__
+#if defined(__linux__) || ((defined(__APPLE__) && defined(__MACH__)))
     char pathBuffer[PATH_MAX] = {0};
     [[maybe_unused]] auto result = readlink(R"(/proc/self/exe)", pathBuffer, PATH_MAX);
 #else
@@ -172,7 +172,7 @@ TEST(WildCharacters, SearchingTests)
     filesystem::path pathTestFolder(pathBuffer);
     pathTestFolder = pathTestFolder.parent_path();
 
-#ifdef __linux__
+#if defined(__linux__) || ((defined(__APPLE__) && defined(__MACH__)))
 #else
     pathTestFolder /= ".."; // creation of Debug or Release subfolder is Window's 'EVERYTHING'
 #endif
@@ -309,7 +309,7 @@ TEST(BinaryLexeme, Replaces)
     auto svLexemeEmpty = AbstractBinaryLexeme::LexemeFromStringView("");
 
     /// replace middle
-    auto svLexeme002 = AbstractBinaryLexeme::LexemeFromVector(std::move(std::vector<char>{'_', '_', 'C'}));
+    auto svLexeme002 = AbstractBinaryLexeme::LexemeFromVector(std::vector<char>{'_', '_', 'C'});
     svLexeme001->Replace(4, 3, svLexeme002);
     svLexeme001->Replace(0,0, svLexemeEmpty); // empty lexeme is also ok
     EXPECT_TRUE(std::ranges::equal(getDataInsideLexeme(svLexeme001), std::string_view("Hell__Corld")));

@@ -2,14 +2,14 @@
 #include <algorithm>
 #include "coloredconsole.h"
 
-#ifndef __linux__
+#if !defined(__linux__) && !((defined(__APPLE__) && defined(__MACH__)))
 #include <windows.h>
 #endif
 
 
 namespace coloredconsole
 {
-#ifndef __linux__
+#if !defined(__linux__) && !((defined(__APPLE__) && defined(__MACH__)))
     /// <summary>
     ///   RAII for set console output color in windows
     /// </summary>
@@ -60,7 +60,7 @@ namespace coloredconsole
             {
                 os << sv.substr(pos, errorPos - pos);
 
-#ifdef __linux__
+#if defined(__linux__) || ((defined(__APPLE__) && defined(__MACH__)))
                 os << "\033[1;31m" << errorSV << "\033[0m";
 #else
                 WindowsConsoleColor color(FOREGROUND_RED | FOREGROUND_INTENSITY);
@@ -75,7 +75,7 @@ namespace coloredconsole
             {
                 os << sv.substr(pos, warningPos - pos);
 
-#ifdef __linux__
+#if defined(__linux__) || ((defined(__APPLE__) && defined(__MACH__)))
                 os << "\033[1;33m" << warningSV << "\033[0m";
 #else
                 WindowsConsoleColor color(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY);

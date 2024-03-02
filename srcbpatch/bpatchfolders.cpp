@@ -2,7 +2,7 @@
 #include "fileprocessing.h"
 #include "bpatchfolders.h"
 
-#ifdef __linux__
+#if defined(__linux__) || ((defined(__APPLE__) && defined(__MACH__)))
     #include <unistd.h>
 #else
     #include <tchar.h>
@@ -27,7 +27,7 @@ namespace
         if (toSet.empty())
         {
             // get full path for executable
-#ifdef __linux__
+#if defined(__linux__) || ((defined(__APPLE__) && defined(__MACH__)))
             char pathBuffer[PATH_MAX] = {0};
             [[maybe_unused]] auto result = readlink(R"(/proc/self/exe)", pathBuffer, PATH_MAX);
 #else
