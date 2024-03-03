@@ -82,10 +82,6 @@ public:
         : src_(src->access())
         , trg_(trg->access())
     {
-        if (src_.size() < 1)
-        {
-            throw logic_error("Pattern to replace cannot be empty");
-        }
         buffer_.resize(src_.size() + 1); // reserve place for usage (+1 needed for inner logic but never being accessed)
     }
 
@@ -202,10 +198,6 @@ public:
 
             rpair.src_ = vPair.first->access();
             const size_t sourceSize = rpair.src_.size();
-            if (sourceSize < 1)
-            {
-                throw logic_error("Pattern to replace cannot be empty");
-            }
             if (bufferSize < sourceSize)
             {
                 bufferSize = sourceSize; // calculate necessary buffer size
@@ -517,35 +509,30 @@ unique_ptr<StreamReplacer> EqualLengthReplacer(StreamReplacerChoice& choice, con
 /// <returns>Replacer for building replacement chain</returns>
 unique_ptr<StreamReplacer> MultipleReplacer(StreamReplacerChoice& choice)
 {
-    bool bSameSize = true;
     const size_t szSrc = choice.cbegin()->first->access().size(); // save size of the first lexeme
-    if (szSrc < 1)
-    {
-        throw logic_error("Pattern to replace cannot be empty");
-    }
 
     // check for sources of the same length
-    for(AbstractLexemesPair& alpair : choice)
+    for (AbstractLexemesPair& alpair: choice)
     {
         if (alpair.first->access().size() != szSrc)
         {
-            bSameSize = false;
-            break;
+            return unique_ptr<StreamReplacer>(new ChoiceReplacer(choice));
         }
     }
 
-    if (bSameSize)
-    {
-        return EqualLengthReplacer(choice, szSrc); // create optimized replacer for lexemes of the same length
-    }
-
-    return unique_ptr<StreamReplacer>(new ChoiceReplacer(choice));
+    return EqualLengthReplacer(choice, szSrc); // create optimized replacer for lexemes of the same length
 }
 
 
 //--------------------------------------------------
 unique_ptr<StreamReplacer> StreamReplacer::CreateReplacer(StreamReplacerChoice& choice)
 {
+    for (AbstractLexemesPair& alpair: choice)
+    {
+        if (alpair.first->access().size() < 1)
+            throw logic_error("Pattern to replace cannot be empty");
+    }
+
     if (choice.size() == 1)
     {
         const AbstractLexemesPair& alexemesPair = *choice.cbegin();

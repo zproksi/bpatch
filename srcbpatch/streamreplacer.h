@@ -14,7 +14,7 @@ class AbstractBinaryLexeme;
 
 /// <summary>
 ///   source is first           (will be replaced)
-///   target is second in pair  (with this lexem)
+///   target is second in pair  (with this lexeme)
 /// </summary>
 typedef std::pair<std::unique_ptr<AbstractBinaryLexeme>&,
     std::unique_ptr<AbstractBinaryLexeme>&> AbstractLexemesPair;
