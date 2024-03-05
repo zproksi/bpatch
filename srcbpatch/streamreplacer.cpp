@@ -159,7 +159,7 @@ void UsualReplacer::DoReplacements(const char toProcess, const bool aEod) const
 /// <param name="src">what we are going to replace</param>
 /// <param name="trg">this is the result of the replacement</param>
 /// <returns>Replacer for building replacement chain</returns>
-static unique_ptr<StreamReplacer> SimpleReplacer(
+static unique_ptr<StreamReplacer> CreateSimpleReplacer(
     unique_ptr<AbstractBinaryLexeme>& src,  // what to replace
     unique_ptr<AbstractBinaryLexeme>& trg)  // with what
 {
@@ -491,7 +491,7 @@ void LexemeOf1Replacer::DoReplacements(const char toProcess, const bool aEod) co
 ///   can be processed. The one that was found first.</param>
 /// <param name="sz">size of all source lexemes</param>
 /// <returns>Replacer for building replacement chain</returns>
-unique_ptr<StreamReplacer> EqualLengthReplacer(StreamReplacerChoice& choice, const size_t sz)
+unique_ptr<StreamReplacer> CreateEqualLengthReplacer(StreamReplacerChoice& choice, const size_t sz)
 {
     if (sz == 1)
     {
@@ -507,12 +507,12 @@ unique_ptr<StreamReplacer> EqualLengthReplacer(StreamReplacerChoice& choice, con
 /// <param name="choice">set of pairs of src & trg lexemes - one of which
 ///   can be processed. The one that was found first.</param>
 /// <returns>Replacer for building replacement chain</returns>
-unique_ptr<StreamReplacer> MultipleReplacer(StreamReplacerChoice& choice)
+unique_ptr<StreamReplacer> CreateMultipleReplacer(StreamReplacerChoice& choice)
 {
     const size_t szSrc = choice.cbegin()->first->access().size(); // save size of the first lexeme
 
     // check for sources of the same length
-    for (AbstractLexemesPair& alpair: choice)
+    for (const AbstractLexemesPair& alpair: choice)
     {
         if (alpair.first->access().size() != szSrc)
         {
@@ -520,25 +520,25 @@ unique_ptr<StreamReplacer> MultipleReplacer(StreamReplacerChoice& choice)
         }
     }
 
-    return EqualLengthReplacer(choice, szSrc); // create optimized replacer for lexemes of the same length
+    return CreateEqualLengthReplacer(choice, szSrc); // create optimized replacer for lexemes of the same length
 }
 
 
 //--------------------------------------------------
 unique_ptr<StreamReplacer> StreamReplacer::CreateReplacer(StreamReplacerChoice& choice)
 {
-    for (AbstractLexemesPair& alpair: choice)
+    for (const AbstractLexemesPair& alpair: choice)
     {
-        if (alpair.first->access().size() < 1)
+        if (alpair.first->access().empty())
             throw logic_error("Pattern to replace cannot be empty");
     }
 
     if (choice.size() == 1)
     {
         const AbstractLexemesPair& alexemesPair = *choice.cbegin();
-        return SimpleReplacer(alexemesPair.first, alexemesPair.second);
+        return CreateSimpleReplacer(alexemesPair.first, alexemesPair.second);
     }
-    return MultipleReplacer(choice);
+    return CreateMultipleReplacer(choice);
 }
 
 }; // namespace bpatch
