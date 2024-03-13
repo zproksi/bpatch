@@ -3,20 +3,6 @@ set(pname bpatch)
 set(wild_library wildcharacters)
 project(${pname})
 
-##get google test
-include(FetchContent)
-FetchContent_Declare(googletest
-    GIT_REPOSITORY https://github.com/google/googletest
-    GIT_TAG release-1.12.1)
-FetchContent_GetProperties(googletest)
-#googletest_POPULATED
-#googletest_SOURCE_DIR
-#googletest_BUILD_DIR
-if(NOT googletest_POPULATED)
-    FetchContent_Populate(googletest)
-    add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BUILD_DIR})
-endif()
-
 # Set C++ standard to 20
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -72,6 +58,20 @@ message(STATUS "CMAKE_CXX_FLAGS:" ${CMAKE_CXX_FLAGS})
 
 # Set Release and Debug configurations
 set(CMAKE_CONFIGURATION_TYPES "Release;Debug" CACHE STRING "Configurations" FORCE)
+
+##get google test
+include(FetchContent)
+FetchContent_Declare(googletest
+        GIT_REPOSITORY https://github.com/google/googletest
+        GIT_TAG release-1.12.1)
+FetchContent_GetProperties(googletest)
+#googletest_POPULATED
+#googletest_SOURCE_DIR
+#googletest_BUILD_DIR
+if(NOT googletest_POPULATED)
+    FetchContent_Populate(googletest)
+    add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BUILD_DIR})
+endif()
 
 include_directories(${wild_library})
 include_directories(src${pname})
