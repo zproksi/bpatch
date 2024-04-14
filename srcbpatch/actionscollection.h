@@ -59,11 +59,11 @@ public:
     void DoReplacements(const char toProcess, const bool aEod) const override;
 
     /// <summary>
-    ///   callback from StreamReplacer
+    ///   Set next replacer in chain of replacers.
+    /// takes ownership over it
     /// </summary>
-    /// <param name="toProcess">replacer to call next</param>
-    void SetNextReplacer(StreamReplacer* const pNext) override;
-
+    /// <param name="pNext">replacer to call next</param>
+    virtual void SetNextReplacer(std::unique_ptr<StreamReplacer>&& pNext) override;
 
 protected:
     /// <summary>
@@ -136,7 +136,7 @@ protected:
     /// <summary>
     ///  here we are holding chain of the replacers
     /// </summary>
-    std::list<std::unique_ptr<StreamReplacer>> replacersChain_;
+    std::unique_ptr<StreamReplacer> replacersChain_;
 }; // class ActionsCollection
 
 

@@ -273,24 +273,23 @@ void ActionsCollection::OnJsonArrayParsed(TJSONObject* const pJson)
 
 void ActionsCollection::DoReplacements(const char toProcess, const bool aEod) const
 {
-    replacersChain_.front()->DoReplacements(toProcess, aEod);
+    replacersChain_->DoReplacements(toProcess, aEod);
 }
 
-void ActionsCollection::SetNextReplacer(StreamReplacer* const pNext)
+
+void ActionsCollection::SetNextReplacer(std::unique_ptr<StreamReplacer>&& pNext)
 {
     if (!pNext)
     {
         throw std::logic_error("Action Collection have not initilized properly. Contact with maintainer.");
     }
-    replacersChain_.back()->SetNextReplacer(pNext);
+    replacersChain_->SetNextReplacer(std::move(pNext)); // now full chain in replacer
 }
-
 
 void ActionsCollection::ReportError(const char* const message)
 {
     throw std::runtime_error(message);
 }
-
 
 void ActionsCollection::ReportDuplicateNameError(const std::string_view& aname)
 {
@@ -439,9 +438,7 @@ void ActionsCollection::CreateChainOfReplacers()
         ReportError("Nothing to replace in todo array of Actions file");
     }
 
-    // last replacer in chain, need to be established in our SetNextReplacer
-    StreamReplacer* pNext = nullptr;
-    for(auto rit = replaces_.rbegin(); rit != replaces_.rend(); ++rit) // from the end
+    for (auto rit = replaces_.crbegin(); rit != replaces_.crend(); ++rit) // from the end
     {
         const VectorStringviewPairs& vPairs = *rit;
         const size_t nReplaces = vPairs.size();
@@ -473,12 +470,10 @@ void ActionsCollection::CreateChainOfReplacers()
         }
         // create replacer
         std::unique_ptr<StreamReplacer> replacer = StreamReplacer::CreateReplacer(sourceTargetPairs);
-
-        // set chain
-        replacer->SetNextReplacer(pNext);
-        pNext = replacer.get();// now we are next to establish
-        replacersChain_.emplace_front(std::move(replacer)); // save in front - we will use front
-
+        // `replacer` needs to hold tail of the chain
+        // replacersChain_ contains the tail of chain
+        replacer->SetNextReplacer(std::move(replacersChain_)); // now full chain in replacer
+        replacersChain_ = std::move(replacer); // now full chain is in place
     } // for(auto rit = replaces_.rbegin(); rit != replaces_.rend(); ++rit)
 
     // everything has been created. free some memory
