@@ -59,8 +59,7 @@ public:
     void DoReplacements(const char toProcess, const bool aEod) const override;
 
     /// <summary>
-    ///   Set next replacer in chain of replacers.
-    /// takes ownership over it
+    ///   Set next replacer in chain of replacers
     /// </summary>
     /// <param name="pNext">replacer to call next</param>
     virtual void SetNextReplacer(std::unique_ptr<StreamReplacer>&& pNext) override;

@@ -472,7 +472,7 @@ void ActionsCollection::CreateChainOfReplacers()
         std::unique_ptr<StreamReplacer> replacer = StreamReplacer::CreateReplacer(sourceTargetPairs);
         // `replacer` needs to hold tail of the chain
         // replacersChain_ contains the tail of chain
-        replacer->SetNextReplacer(std::move(replacersChain_)); // now full chain in replacer
+        replacer->SetNextReplacer(std::move(replacersChain_)); // now full chain is in replacer
         replacersChain_ = std::move(replacer); // now full chain is in place
     } // for(auto rit = replaces_.rbegin(); rit != replaces_.rend(); ++rit)
 
