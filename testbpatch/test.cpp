@@ -689,7 +689,7 @@ TEST(ACollection, ActionsProcessing)
         using namespace bpatch;
         ActionsCollection ac(move(vec)); // processor
         TestWriter tw; // here we accumulating data
-        ac.SetNextReplacer(std::move(StreamReplacer::ReplacerLastInChain(&tw))); // set write point
+        ac.SetNextReplacer(StreamReplacer::ReplacerLastInChain(&tw)); // set write point
 
 
         std::ranges::for_each(tst.testData, [&ac](const char c) {ac.DoReplacements(c, false); });
@@ -957,7 +957,7 @@ TEST(ACollection, MultipleUsageOfProcessing)
         using namespace bpatch;
         ActionsCollection ac(move(vec)); // processor
         TestWriter tw; // here we accumulating data
-        ac.SetNextReplacer(std::move(StreamReplacer::ReplacerLastInChain(&tw))); // set write point
+        ac.SetNextReplacer(StreamReplacer::ReplacerLastInChain(&tw)); // set write point
 
 
         std::ranges::for_each(tst.testData, [&ac](const char c) {ac.DoReplacements(c, false); });
