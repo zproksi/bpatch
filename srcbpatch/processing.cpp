@@ -61,7 +61,7 @@ void DoReadReplaceWrite(unique_ptr<ActionsCollection>& todo, Reader* const pRead
 {
     using namespace std;
     // setup chain to write the data
-    todo->SetNextReplacer(StreamReplacer::ReplacerLastInChain(pWriter));
+    todo->SetLastReplacer(StreamReplacer::ReplacerLastInChain(pWriter));
 
     // hold vector where we are reading data.
     // no new allocations

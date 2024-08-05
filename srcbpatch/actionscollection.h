@@ -62,7 +62,7 @@ public:
     ///   Set next replacer in chain of replacers
     /// </summary>
     /// <param name="pNext">replacer to call next</param>
-    virtual void SetNextReplacer(std::unique_ptr<StreamReplacer>&& pNext) override;
+    virtual void SetLastReplacer(std::unique_ptr<StreamReplacer>&& pNext) override;
 
 protected:
     /// <summary>

@@ -277,13 +277,13 @@ void ActionsCollection::DoReplacements(const char toProcess, const bool aEod) co
 }
 
 
-void ActionsCollection::SetNextReplacer(std::unique_ptr<StreamReplacer>&& pNext)
+void ActionsCollection::SetLastReplacer(std::unique_ptr<StreamReplacer>&& pNext)
 {
     if (!pNext)
     {
         throw std::logic_error("Action Collection have not initilized properly. Contact with maintainer.");
     }
-    replacersChain_->SetNextReplacer(std::move(pNext)); // now full chain in replacer
+    replacersChain_->SetLastReplacer(std::move(pNext)); // now full chain in replacer
 }
 
 void ActionsCollection::ReportError(const char* const message)
@@ -472,7 +472,7 @@ void ActionsCollection::CreateChainOfReplacers()
         std::unique_ptr<StreamReplacer> replacer = StreamReplacer::CreateReplacer(sourceTargetPairs);
         // `replacer` needs to hold tail of the chain
         // replacersChain_ contains the tail of chain
-        replacer->SetNextReplacer(std::move(replacersChain_)); // now full chain is in replacer
+        replacer->SetLastReplacer(std::move(replacersChain_)); // now full chain is in replacer
         replacersChain_ = std::move(replacer); // now full chain is in place
     } // for(auto rit = replaces_.rbegin(); rit != replaces_.rend(); ++rit)
 

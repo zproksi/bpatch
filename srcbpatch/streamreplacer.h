@@ -40,10 +40,10 @@ struct StreamReplacer
 
 
     /// <summary>
-    ///   Set next replacer in chain of replacers. (Add it as the last in the chain, actually)
+    ///   Set last replacer in chain of replacers. (Add it as the last in the chain, actually)
     /// </summary>
     /// <param name="pNext">replacer to call next</param>
-    virtual void SetNextReplacer(std::unique_ptr<StreamReplacer>&& pNext) = 0;
+    virtual void SetLastReplacer(std::unique_ptr<StreamReplacer>&& pNext) = 0;
 
 
     virtual ~StreamReplacer() = default;

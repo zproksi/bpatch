@@ -17,7 +17,7 @@ public:
     WriterReplacer(Writer* const pWriter): pWriter_(pWriter){};
 
     virtual void DoReplacements(const char toProcess, const bool aEod) const override;
-    virtual void SetNextReplacer(std::unique_ptr<StreamReplacer>&& pNext) override;
+    virtual void SetLastReplacer(std::unique_ptr<StreamReplacer>&& pNext) override;
 protected:
     Writer* const pWriter_;
 };
@@ -29,7 +29,7 @@ void WriterReplacer::DoReplacements(const char toProcess, const bool aEod) const
 }
 
 
-void WriterReplacer::SetNextReplacer(std::unique_ptr<StreamReplacer>&&)
+void WriterReplacer::SetLastReplacer(std::unique_ptr<StreamReplacer>&&)
 {
     throw logic_error("Writer Replacer should be unchangeable. Contact with maintainer.");
 }
@@ -52,11 +52,11 @@ protected:
     std::unique_ptr<StreamReplacer> pNext_;
 
 public:
-    void SetNextReplacer(std::unique_ptr<StreamReplacer>&& pNext) override
+    void SetLastReplacer(std::unique_ptr<StreamReplacer>&& pNext) override
     {
         if (pNext_)
         {
-            pNext_->SetNextReplacer(std::move(pNext));
+            pNext_->SetLastReplacer(std::move(pNext));
         }
         else
         {
