@@ -23,7 +23,7 @@ unique_ptr<AbstractBinaryLexeme> AbstractBinaryLexeme::LexemeFromVector(vector<c
     return unique_ptr<AbstractBinaryLexeme>(new AbstractBinaryLexeme(move(asrcVec)));
 }
 
-vector<char> CreateVectorWithData(const char* const pData, const size_t sz)
+inline vector<char> CreateVectorWithData(const char* const pData, const size_t sz)
 {
     return vector<char>(pData, pData + sz);
 }

@@ -69,19 +69,19 @@ protected:
     ///   throws error if we meet error in the expected logic
     /// </summary>
     /// <param name="message">text of the error</param>
-    void ReportError(const char* const message);
+    static void ReportError(const char* const message);
 
     /// <summary>
     ///   throws error if we meet duplicate name of lexeme
     /// </summary>
     /// <param name="aname">duplicate name of lexeme</param>
-    void ReportDuplicateNameError(const std::string_view& aname);
+    static void ReportDuplicateNameError(const std::string_view& aname);
 
     /// <summary>
     ///   throws error if we cannot find lexeme for composite lexeme
     /// </summary>
     /// <param name="aname">nonexistent name of lexeme</param>
-    void ReportMissedNameError(const std::string_view& aname);
+    static void ReportMissedNameError(const std::string_view& aname);
 
     /// <summary>
     ///   parse array of either 10 based integers or array of hex based strings
@@ -130,12 +130,15 @@ protected:
     // need to be processed last
     typedef std::pair<std::string_view, std::string_view> StringviewPair; // src + trg
     typedef std::vector<StringviewPair> VectorStringviewPairs; // all pairs from one replace
-    std::vector<VectorStringviewPairs> replaces_; // all replaces
 
     /// <summary>
     ///  here we are holding chain of the replacers
     /// </summary>
     std::unique_ptr<StreamReplacer> replacersChain_;
+
+private:
+    // all replaces, will be cleared after initialization; need temporary object for loading/initialization only
+    std::vector<VectorStringviewPairs> replaces_;
 }; // class ActionsCollection
 
 
