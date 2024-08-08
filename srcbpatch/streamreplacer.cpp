@@ -90,7 +90,7 @@ public:
         : src_(src->access())
         , trg_(trg->access())
     {
-        buffer_.resize(src_.size() + 1); // reserve place for usage (+1 needed for inner logic but never being accessed)
+        cachedData_.resize(src_.size() + 1); // reserve place for usage (+1 needed for inner logic but never being accessed)
     }
 
     void DoReplacements(const char toProcess, const bool aEod) const override;
@@ -103,7 +103,7 @@ protected:
 
     // this is used to hold temporary data while the logic is 
     // looking for the new beginning of the cached value
-    mutable vector<char> buffer_;
+    mutable vector<char> cachedData_;
 };
 
 
@@ -149,13 +149,13 @@ void UsualReplacer::DoReplacements(const char toProcess, const bool aEod) const
     //         at least 1 char need to be send further
     //         remaining cached data including toProcess need to be reprocessed for match
 
-    memcpy(buffer_.data(), src_.data(), cachedAmount_);
-    buffer_[cachedAmount_++]= toProcess;
+    memcpy(cachedData_.data(), src_.data(), cachedAmount_);
+    cachedData_[cachedAmount_++]= toProcess;
     size_t i = 0;
     do
     {
-        pNext_->DoReplacements(buffer_[i++], false); // send 1 byte after another
-    } while (0 != memcmp(src_.data(), &buffer_[i], --cachedAmount_));
+        pNext_->DoReplacements(cachedData_[i++], false); // send 1 byte after another
+    } while (0 != memcmp(src_.data(), &cachedData_[i], --cachedAmount_));
     // Everything that was needed has already been sent
     // cachedAmount_ is zero or greater
 }
@@ -214,14 +214,14 @@ public:
             rpair.trg_ = vPair.second->access();
         }
 
-        buffer_.resize(bufferSize + 1); // +1 needed for inner logic but never being accessed
+        cachedData_.resize(bufferSize + 1); // +1 needed for inner logic but never being accessed
     }
 
     void DoReplacements(const char toProcess, const bool aEod) const override;
 
 protected:
     /// <summary>
-    ///    check for partial or full match of data from buffer_
+    ///    check for partial or full match of data from cachedData_
     ///       with any of lexemes sequentially
     ///       and provides type of match and matched length and index if found
     /// </summary>
@@ -229,19 +229,18 @@ protected:
     /// <returns>partial, full, length, index </returns>
     tuple<bool, bool, size_t, size_t> CheckMatch(const size_t indexFrom) const
     {
-        size_t i = indexFrom;
-        for (; i < rpairs_.size(); ++i)
+        for (size_t i = indexFrom; i < rpairs_.size(); ++i)
         {
             const auto& srcSpan = rpairs_[i].src_;
             const size_t cmpLength = (srcSpan.size() > cachedAmount_) ? cachedAmount_ : srcSpan.size();
 
-            if (0 != memcmp(srcSpan.data(), buffer_.data(), cmpLength))
-            {
-                continue; // no match here
+            if (0 == memcmp(srcSpan.data(), cachedData_.data(), cmpLength))
+            { // match
+                const bool fullMatch = cmpLength == srcSpan.size();
+                return {!fullMatch, fullMatch, cmpLength, i};
             }
 
-            const bool fullMatch = cmpLength == srcSpan.size();
-            return {!fullMatch, fullMatch, cmpLength, i};
+            // continue - no match here
         }
         return {false, false, 0, 0};
     }
@@ -255,7 +254,7 @@ protected:
 
     // this is used to hold temporary data while the logic is 
     // looking for the new beginning of the cached value
-    mutable vector<char> buffer_;
+    mutable vector<char> cachedData_;
 };
 
 
@@ -284,7 +283,7 @@ void ChoiceReplacer::DoReplacements(const char toProcess, const bool aEod) const
                     for (size_t q = 0; q < rpair.trg_.size(); ++q) { pNext_->DoReplacements(rpair.trg_[q], false); }
 
                     const size_t szProcessed = rpair.src_.size(); // matched source
-                    shift_left(buffer_.data(), buffer_.data() + cachedAmount_, szProcessed);
+                    shift_left(cachedData_.data(), cachedData_.data() + cachedAmount_, szProcessed);
 
                     cachedAmount_ -= szProcessed;
                     break;
@@ -295,8 +294,8 @@ void ChoiceReplacer::DoReplacements(const char toProcess, const bool aEod) const
             if (initialCached == cachedAmount_)
             {
                 // send 1 byte
-                pNext_->DoReplacements(buffer_.data()[0], false);
-                shift_left(buffer_.data(), buffer_.data() + cachedAmount_, 1);
+                pNext_->DoReplacements(cachedData_[0], false);
+                shift_left(cachedData_.data(), cachedData_.data() + cachedAmount_, 1);
                 --cachedAmount_;
             }
         };
@@ -307,7 +306,7 @@ void ChoiceReplacer::DoReplacements(const char toProcess, const bool aEod) const
 
 
     // set buffer of cached at once
-    buffer_.data()[cachedAmount_++] = toProcess;
+    cachedData_[cachedAmount_++] = toProcess;
     while (cachedAmount_ > 0)
     {
         // for the pairs
@@ -320,7 +319,7 @@ void ChoiceReplacer::DoReplacements(const char toProcess, const bool aEod) const
                 for (size_t q = 0; q < rpair.trg_.size(); ++q) { pNext_->DoReplacements(rpair.trg_[q], false); }
 
                 // what if the cached index other and length is less than cached
-                shift_left(buffer_.data(), buffer_.data() + cachedAmount_, length);
+                shift_left(cachedData_.data(), cachedData_.data() + cachedAmount_, length);
                 cachedAmount_ -= length;
                 indexOfCached_ = 0; // start from the very first pair of the lexemes again
                 return;
@@ -334,8 +333,8 @@ void ChoiceReplacer::DoReplacements(const char toProcess, const bool aEod) const
         }// for  (size_t i = indexOfCached_; i < rpairs_.size(); ++i)
 
         // send 1 byte
-        pNext_->DoReplacements(buffer_.data()[0], false);
-        shift_left(buffer_.data(), buffer_.data() + cachedAmount_, 1);
+        pNext_->DoReplacements(cachedData_[0], false);
+        shift_left(cachedData_.data(), cachedData_.data() + cachedAmount_, 1);
         --cachedAmount_;
         indexOfCached_ = 0; // start from the very first pair of the lexemes again
     } // while (cachedAmount_ > 0)
@@ -357,7 +356,7 @@ class UniformLexemeReplacer final : public ReplacerWithNext
 {
 public:
     UniformLexemeReplacer(StreamReplacerChoice& choice, const size_t sz)
-        : buffer_(sz + 1)
+        : cachedData_(sz + 1)
     {
         for (AbstractLexemesPair& alpair : choice)
         {
@@ -380,11 +379,11 @@ protected:
     // here we hold pairs of sources and targets
     unordered_map<string_view, string_view> replaceOptions_;
 
-    mutable size_t cachedAmount_ = 0; // we cache this amount of data in the buffer_
+    mutable size_t cachedAmount_ = 0; // we cache this amount of data in the cachedData_
 
     // this is used to hold temporary data while the logic is 
     // looking for the new beginning of the cached value
-    mutable vector<char> buffer_;
+    mutable vector<char> cachedData_;
 };
 
 
@@ -400,7 +399,7 @@ void UniformLexemeReplacer::DoReplacements(const char toProcess, const bool aEod
     {
         if (cachedAmount_ > 0)
         {
-            for (size_t q = 0; q < cachedAmount_; ++q) { pNext_->DoReplacements(buffer_[q], false); }
+            for (size_t q = 0; q < cachedAmount_; ++q) { pNext_->DoReplacements(cachedData_[q], false); }
             cachedAmount_ = 0;
         }
         pNext_->DoReplacements(toProcess, aEod); // send end of the data further
@@ -409,9 +408,9 @@ void UniformLexemeReplacer::DoReplacements(const char toProcess, const bool aEod
 
 
     // set buffer of cached at once
-    char* const& pBuffer = buffer_.data();
+    char* const& pBuffer = cachedData_.data();
     pBuffer[cachedAmount_++] = toProcess;
-    if (cachedAmount_ >= buffer_.size() - 1)
+    if (cachedAmount_ >= cachedData_.size() - 1)
     {
         if (const auto it = replaceOptions_.find(string_view(pBuffer, cachedAmount_)); it != replaceOptions_.cend())
         { // found

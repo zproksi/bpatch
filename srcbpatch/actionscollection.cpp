@@ -242,7 +242,7 @@ void ActionsCollection::OnJsonArrayParsed(TJSONObject* const pJson)
 
         if (const bool added = dictionary_.AddBinaryLexeme(pJson->name_,
             AbstractBinaryLexeme::LexemeFromStringView(value));
-            !added)
+            !added) [[unlikely]]
         {// overwritten
             ReportDuplicateNameError(pJson->name_);
         }
@@ -257,7 +257,7 @@ void ActionsCollection::OnJsonArrayParsed(TJSONObject* const pJson)
 
         if (const bool added = dictionary_.AddBinaryLexeme(pJson->name_,
             AbstractBinaryLexeme::LexemeFromStringView(value));
-            !added)
+            !added) [[unlikely]]
         {// overwritten
             ReportDuplicateNameError(pJson->name_);
         }
@@ -317,7 +317,7 @@ std::string_view ActionsCollection::ParseDictionaryArray(TJSONObject* const pJso
     size_t rezLength = 0;
 
     const size_t sz = pJson->ChildCount();
-    if (sz == 0) // empty array
+    if (sz == 0) [[unlikely]]// empty array
     {
         return emptySV; // empty data - can be used to remove something
     }
@@ -347,17 +347,15 @@ std::string_view ActionsCollection::ParseDictionaryArray(TJSONObject* const pJso
         }
         // add a value to the result string view
         pTarget[rezLength++] = *reinterpret_cast<char*>(&c);
-    }
+    } // for
 
-    if (nullptr == pTarget)
+    if (nullptr == pTarget) [[unlikely]]
     {
         ReportError(errorMsg); // throws
         return emptySV;
     }
-    else
-    {
-        return std::string_view(pTarget, rezLength);
-    }
+
+    return std::string_view(pTarget, rezLength);
 }
 
 
@@ -441,9 +439,8 @@ void ActionsCollection::CreateChainOfReplacers()
     for (auto rit = replaces_.crbegin(); rit != replaces_.crend(); ++rit) // from the end
     {
         const VectorStringviewPairs& vPairs = *rit;
-        const size_t nReplaces = vPairs.size();
-        // check for no replace 
-        if (nReplaces < 1)
+
+        if (vPairs.empty())// check for no replace
         {
             // replacements not found - actually good place for warning
             std::cout << coloredconsole::toconsole("Warning: empty json \"replace\" object detected.") << std::endl;

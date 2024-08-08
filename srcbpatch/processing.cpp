@@ -65,8 +65,7 @@ void DoReadReplaceWrite(unique_ptr<ActionsCollection>& todo, Reader* const pRead
 
     // hold vector where we are reading data.
     // no new allocations
-    vector<char> adata;
-    adata.resize(SZBUFF_FC);
+    vector<char> adata(static_cast<vector<char>::size_type>(SZBUFF_FC));
     const span dataHolder(adata.data(), SZBUFF_FC);
 
     do
@@ -76,7 +75,7 @@ void DoReadReplaceWrite(unique_ptr<ActionsCollection>& todo, Reader* const pRead
         std::ranges::for_each(fullSpan, [&todo](const char c) {todo->DoReplacements(c, false); });
 
     }while (!pReader->FileReaded());
-    todo->DoReplacements('e', true);
+    todo->DoReplacements('e', true); // only 'true' as sign of data end is important here
 }
 
 
@@ -139,6 +138,8 @@ bool ProcessTheFile(FileProcessingInfo& jobInfo)
 /// <summary>
 ///  Wild charactes processing level.
 /// ActionsCollection will be created here
+///   By Mask - means file masked by either '?' or '*' or both in any combination
+///     jobInfo provides result names
 /// </summary>
 /// <param name="jobInfo">parameters from command string</param>
 /// <returns>true; or throws</returns>
@@ -153,14 +154,14 @@ bool ProcessFilesByMask(ProcessingInfo& jobInfo)
     unique_ptr<ActionsCollection> todo = CreateActionsFile(jobInfo.file_actions);
 
     // look up logic for files
-    wildcharacters::LookUp lup;
-    lup.RegisterSourceAndDestination(jobInfo.file_source, jobInfo.file_target);
+    wildcharacters::LookUp lookupMasks; // masked files from command line
+    lookupMasks.RegisterSourceAndDestination(jobInfo.file_source, jobInfo.file_target);
     string srcFilename; // source file name
     string dstFilename; // destination file name
 
     size_t filesProcessed = 0;
     FileProcessingInfo fileInfo{.todo = todo, .src = srcFilename, .dst = dstFilename, .overwrite = jobInfo.overwrite};
-    while (lup.NextFilenamesPair(srcFilename, dstFilename)) // request file names
+    while (lookupMasks.NextFilenamesPair(srcFilename, dstFilename)) // request file names
     {
         std::cout << "Source file:          '" << fileInfo.src << "'\n";
         std::cout << "Target file:          '" << fileInfo.dst << "'\n";
