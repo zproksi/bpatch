@@ -155,7 +155,7 @@ void UsualReplacer::DoReplacements(const char toProcess, const bool aEod) const
     do
     {
         pNext_->DoReplacements(buffer_[i++], false); // send 1 byte after another
-    } while (0 != memcmp(src_.data(), &buffer_[i], --cachedAmount_));
+    } while (--cachedAmount_ && i < buffer_.size() && (0 != memcmp(src_.data(), &buffer_[i], cachedAmount_)));
     // Everything that was needed has already been sent
     // cachedAmount_ is zero or greater
 }
