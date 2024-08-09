@@ -90,7 +90,7 @@ public:
         : src_(src->access())
         , trg_(trg->access())
     {
-        buffer_.resize(src_.size() + 1); // reserve place for usage (+1 needed for inner logic but never being accessed)
+        buffer_.resize(src_.size()); // reserve place for usage (+1 needed for inner logic but never being accessed)
     }
 
     void DoReplacements(const char toProcess, const bool aEod) const override;
@@ -214,7 +214,7 @@ public:
             rpair.trg_ = vPair.second->access();
         }
 
-        buffer_.resize(bufferSize + 1); // +1 needed for inner logic but never being accessed
+        buffer_.resize(bufferSize); // +1 needed for inner logic but never being accessed
     }
 
     void DoReplacements(const char toProcess, const bool aEod) const override;
