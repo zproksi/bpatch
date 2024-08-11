@@ -262,7 +262,7 @@ protected:
     vector<ChoiceReplacerPair> rpairs_;
 
     mutable size_t cachedAmount_ = 0; // we cache this amount of data
-    mutable size_t indexOfCached_ = 0; // at this index from rpairs_
+    mutable size_t indexOfPartialMatch_ = 0; // at this index from rpairs_, represents last partial match
 
     // this is used to hold temporary data while the logic is 
     // looking for the new beginning of the cached value
@@ -286,7 +286,7 @@ void ChoiceReplacer::ProcessLastCharacter(const char toProcess) const
     while (cachedAmount_ > 0)
     {
         bool foundFullMatch = false;
-        for (size_t i = indexOfCached_; i < rpairs_.size(); ++i)
+        for (size_t i = indexOfPartialMatch_; i < rpairs_.size(); ++i)
         {
             auto [partialMatch, fullMatch, srcMatchedLength, destStringIdx] = CheckMatch(i);
             if (fullMatch)
@@ -301,7 +301,7 @@ void ChoiceReplacer::ProcessLastCharacter(const char toProcess) const
         // No full match -> send 1 char from cache
         if (!foundFullMatch)
         {
-            MakeReplace(std::span<char> (&buffer_.front(), 1));
+            MakeReplace(std::span<char> (&cachedData_.front(), 1));
             CleanTheCache(1);
         }
     }
@@ -310,10 +310,10 @@ void ChoiceReplacer::ProcessLastCharacter(const char toProcess) const
 
 void ChoiceReplacer::ProcessCharacter(const char toProcess) const
 {
-    buffer_[cachedAmount_++] = toProcess;
+    cachedData_[cachedAmount_++] = toProcess;
     while (cachedAmount_ > 0)
     {
-        for (size_t i = indexOfCached_; i < rpairs_.size(); ++i)
+        for (size_t i = indexOfPartialMatch_; i < rpairs_.size(); ++i)
         {
             auto [partialMatch, fullMatch, srcMatchedLength, matchPairIdx] = CheckMatch(i);
             if (fullMatch)
@@ -324,12 +324,12 @@ void ChoiceReplacer::ProcessCharacter(const char toProcess) const
             }
             if (partialMatch)
             {
-                indexOfCached_ = matchPairIdx;
+                indexOfPartialMatch_ = matchPairIdx;
                 return;
             }
         }
         // No any match -> send 1 char from cache
-        MakeReplace(std::span<char> (&buffer_.front(), 1));
+        MakeReplace(std::span<char> (&cachedData_.front(), 1));
         CleanTheCache(1);
     }
 }
@@ -340,12 +340,12 @@ inline void ChoiceReplacer::MakeReplace(span<const char> target) const
     {
         pNext_->DoReplacements(elem, false);
     }
-    indexOfCached_ = 0;
+    indexOfPartialMatch_ = 0;
 }
 
 inline void ChoiceReplacer::CleanTheCache(size_t srcMatchedLength) const
 {
-    shift_left(buffer_.data(), buffer_.data() + cachedAmount_, static_cast<long>(srcMatchedLength));
+    shift_left(cachedData_.data(), cachedData_.data() + cachedAmount_, static_cast<long>(srcMatchedLength));
     cachedAmount_ -= srcMatchedLength;
 }
 
