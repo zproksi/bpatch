@@ -90,7 +90,7 @@ public:
         : src_(src->access())
         , trg_(trg->access())
     {
-        cachedData_.resize(src_.size() + 1); // reserve place for usage (+1 needed for inner logic but never being accessed)
+        cachedData_.resize(src_.size());
     }
 
     void DoReplacements(const char toProcess, const bool aEod) const override;
@@ -155,7 +155,7 @@ void UsualReplacer::DoReplacements(const char toProcess, const bool aEod) const
     do
     {
         pNext_->DoReplacements(cachedData_[i++], false); // send 1 byte after another
-    } while (0 != memcmp(src_.data(), &cachedData_[i], --cachedAmount_));
+    } while (0 != memcmp(src_.data(), cachedData_.data() + i, --cachedAmount_));
     // Everything that was needed has already been sent
     // cachedAmount_ is zero or greater
 }
@@ -214,7 +214,7 @@ public:
             rpair.trg_ = vPair.second->access();
         }
 
-        cachedData_.resize(bufferSize + 1); // +1 needed for inner logic but never being accessed
+        cachedData_.resize(bufferSize);
     }
 
     void DoReplacements(const char toProcess, const bool aEod) const override;
@@ -356,7 +356,7 @@ class UniformLexemeReplacer final : public ReplacerWithNext
 {
 public:
     UniformLexemeReplacer(StreamReplacerChoice& choice, const size_t sz)
-        : cachedData_(sz + 1)
+        : cachedData_(sz)
     {
         for (AbstractLexemesPair& alpair : choice)
         {
@@ -410,7 +410,7 @@ void UniformLexemeReplacer::DoReplacements(const char toProcess, const bool aEod
     // set buffer of cached at once
     char* const& pBuffer = cachedData_.data();
     pBuffer[cachedAmount_++] = toProcess;
-    if (cachedAmount_ >= cachedData_.size() - 1)
+    if (cachedAmount_ >= cachedData_.size())
     {
         if (const auto it = replaceOptions_.find(string_view(pBuffer, cachedAmount_)); it != replaceOptions_.cend())
         { // found
