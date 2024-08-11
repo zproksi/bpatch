@@ -1,12 +1,14 @@
 #include "pch.h"
 #include <gtest/gtest.h>
+#include <fstream>
+
 
 #if defined(__linux__) || ((defined(__APPLE__) && defined(__MACH__)))
 #include <unistd.h>
 #else
 #include <tchar.h>
 #include <windows.h>
-#endif 
+#endif
 
 
 namespace
@@ -152,6 +154,61 @@ TEST(WildCharacters, ProcessingInvalid)
 }
 
 /// <summary>
+///  Files_For_Test class creates and then removes set of files and folders
+///  for performing search by mask during unit tests execution
+/// </summary>
+class Files_For_Test final
+{
+    std::filesystem::path base_folder;
+    std::filesystem::path subfolder_k;
+    std::filesystem::path subfolder_keb;
+    const std::string filenames[8] = {"a", "ae", "aeb", "aebc", "a.txt", "ae.txt", "aeb.txt", "aebc.txt"};
+
+    Files_For_Test(const Files_For_Test&) = delete;
+    Files_For_Test& operator =(const Files_For_Test&) = delete;
+    Files_For_Test(Files_For_Test&&) noexcept = delete;
+    Files_For_Test& operator =(Files_For_Test&&) noexcept = delete;
+public:
+    Files_For_Test(const std::filesystem::path& test_folder)
+        : base_folder(test_folder / "fortesting")
+        , subfolder_k(test_folder / "fortesting" / "k")
+        , subfolder_keb(test_folder / "fortesting" / "keb")
+    {
+        // Create the folder "fortesting"
+        std::filesystem::create_directory(base_folder);
+        // Create subfolders in "fortesting"
+        std::filesystem::create_directory(subfolder_k);
+        std::filesystem::create_directory(subfolder_keb);
+
+        // Create files in "fortesting"
+        for (const auto& filename : filenames)
+        {
+            std::filesystem::path filepath = base_folder / filename;
+            std::ofstream outfile(filepath);
+            outfile << 'A';
+            outfile.close();
+        }
+    }
+
+    std::filesystem::path FolderWithFiles() const noexcept { return base_folder; }
+
+    ~Files_For_Test()
+    {
+        // Remove all files
+        for (const auto& filename : filenames) {
+            std::filesystem::path filepath = base_folder / filename;
+            std::filesystem::remove(filepath);
+        }
+
+        // Remove subdirectories
+        std::filesystem::remove(subfolder_k);
+        std::filesystem::remove(subfolder_keb);
+        // Finally, remove the "fortesting" folder
+        std::filesystem::remove(base_folder);
+    }
+}; // Files_For_Test
+
+/// <summary>
 ///  must throw if wild characters in path
 ///  must throw if mask mismatch
 /// </summary>
@@ -172,12 +229,9 @@ TEST(WildCharacters, SearchingTests)
     filesystem::path pathTestFolder(pathBuffer);
     pathTestFolder = pathTestFolder.parent_path();
 
-#if defined(__linux__) || ((defined(__APPLE__) && defined(__MACH__)))
-#else
-    pathTestFolder /= ".."; // creation of Debug or Release subfolder is Window's 'EVERYTHING'
-#endif
-
-    pathTestFolder = pathTestFolder / "fortesting";
+    // setup creation and deletion of files
+    Files_For_Test testFilesStructure(pathTestFolder);
+    pathTestFolder = testFilesStructure.FolderWithFiles();
 
     struct
     {
@@ -204,7 +258,7 @@ TEST(WildCharacters, SearchingTests)
         , {"ae.txt", 1}
     };
 
-    ///
+    /// test every mask for sourcce+target combinations
     for (auto&& item : arrToCheck)
     {
         for (size_t k = 0; k < 4; ++k)
@@ -463,7 +517,7 @@ TEST(ACollection, ActionsProcessingInvalid)
         // duplicate pattern name
         , R"(
              {"dictionary":{"text":{"text1":"Textual value"},"hexadecimal":{"text2":["1a"]},
-                            "composite" : [{"composite 001": ["text1","text2"] },{"text2": ["text1","composite 001"] }] 
+                            "composite" : [{"composite 001": ["text1","text2"] },{"text2": ["text1","composite 001"] }]
                            },
               "todo" : [{"replace":{"text1":"text1"}}] }
         )"
@@ -474,7 +528,7 @@ TEST(ACollection, ActionsProcessingInvalid)
         // no todo
         , R"(
              {"dictionary":{"text":{"text1":"Textual value"},"hexadecimal":{"text2":["1a"]},
-                            "composite" : [{"composite 001": ["text1","text2"] },{"text2": ["text1","composite 001"] }] 
+                            "composite" : [{"composite 001": ["text1","text2"] },{"text2": ["text1","composite 001"] }]
                            }, "todo":[]}
         )"
     };
@@ -536,7 +590,7 @@ namespace // for emulate writer
 /// <summary>
 ///   actions processing - check input and output
 /// </summary>
-/// 
+///
 TEST(ACollection, ActionsProcessing)
 {
     TestData arrTests[] = {
@@ -710,7 +764,7 @@ TEST(ACollection, ActionsProcessing)
 ///    We need to prove that second usage of ActionsCollection class
 ///  will provide the same result
 /// </summary>
-/// 
+///
 TEST(ACollection, MultipleUsageOfProcessing)
 {
     TestData arrTests[] = {
