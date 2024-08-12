@@ -189,6 +189,8 @@ class ChoiceReplacer final : public ReplacerWithNext
         span<const char> trg_;
     }ChoiceReplacerPair;
 
+    enum SearchMatchStrategy {full, any};
+
 public:
     /// <summary>
     ///   creating ChoiceReplacer from provided pairs
@@ -238,8 +240,9 @@ protected:
     ///       and provides type of match and matched length and index if found
     /// </summary>
     /// <param name="indexFrom"> search in pairs from this index</param>
+    /// <param name="strategy"> what type of match we want to find : full or any </param>
     /// <returns>partial, full, length, index </returns>
-    tuple<bool, bool, size_t, size_t> CheckMatch(const size_t indexFrom) const
+    tuple<bool, bool, size_t, size_t> FindMatch(const size_t indexFrom, SearchMatchStrategy strategy) const
     {
         for (size_t i = indexFrom; i < rpairs_.size(); ++i)
         {
@@ -248,8 +251,14 @@ protected:
 
             if (0 == memcmp(srcSpan.data(), cachedData_.data(), cmpLength))
             { // match
-                const bool fullMatch = cmpLength == srcSpan.size();
-                return {!fullMatch, fullMatch, cmpLength, i};
+                if (const bool fullMatch = cmpLength == srcSpan.size(); fullMatch)
+                {
+                    return {false, true, cmpLength, i};
+                }
+                if (strategy == any)
+                {
+                    return {true, false, cmpLength, i};
+                }
             }
 
             // continue - no match here
@@ -285,21 +294,13 @@ void ChoiceReplacer::ProcessLastCharacter(const char toProcess) const
 {
     while (cachedAmount_ > 0)
     {
-        bool foundFullMatch = false;
-        for (size_t i = indexOfPartialMatch_; i < rpairs_.size(); ++i)
+        auto [partialMatch, fullMatch, srcMatchedLength, destStringIdx] = FindMatch(indexOfPartialMatch_, full);
+        if (fullMatch)
         {
-            auto [partialMatch, fullMatch, srcMatchedLength, destStringIdx] = CheckMatch(i);
-            if (fullMatch)
-            {
-                foundFullMatch = true;
-                MakeReplace(rpairs_[destStringIdx].trg_);
-                CleanTheCache(srcMatchedLength);
-                break;
-            }
+            MakeReplace(rpairs_[destStringIdx].trg_);
+            CleanTheCache(srcMatchedLength);
         }
-
-        // No full match -> send 1 char from cache
-        if (!foundFullMatch)
+        else // No full match -> send 1 char from cache
         {
             MakeReplace(std::span<char> (&cachedData_.front(), 1));
             CleanTheCache(1);
@@ -313,20 +314,17 @@ void ChoiceReplacer::ProcessCharacter(const char toProcess) const
     cachedData_[cachedAmount_++] = toProcess;
     while (cachedAmount_ > 0)
     {
-        for (size_t i = indexOfPartialMatch_; i < rpairs_.size(); ++i)
+        auto [partialMatch, fullMatch, srcMatchedLength, matchPairIdx] = FindMatch(indexOfPartialMatch_, any);
+        if (fullMatch)
         {
-            auto [partialMatch, fullMatch, srcMatchedLength, matchPairIdx] = CheckMatch(i);
-            if (fullMatch)
-            {
-                MakeReplace(rpairs_[matchPairIdx].trg_);
-                CleanTheCache(srcMatchedLength);
-                return;
-            }
-            if (partialMatch)
-            {
-                indexOfPartialMatch_ = matchPairIdx;
-                return;
-            }
+            MakeReplace(rpairs_[matchPairIdx].trg_);
+            CleanTheCache(srcMatchedLength);
+            return;
+        }
+        if (partialMatch)
+        {
+            indexOfPartialMatch_ = matchPairIdx;
+            return;
         }
         // No any match -> send 1 char from cache
         MakeReplace(std::span<char> (&cachedData_.front(), 1));
