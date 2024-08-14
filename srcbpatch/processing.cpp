@@ -1,10 +1,10 @@
+#include "stdafx.h"
 #include "actionscollection.h"
 #include "binarylexeme.h"
 #include "bpatchfolders.h"
 #include "consoleparametersreader.h"
 #include "fileprocessing.h"
 #include "processing.h"
-#include "stdafx.h"
 #include "timemeasurer.h"
 #include "wildcharacters.h"
 
