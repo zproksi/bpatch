@@ -227,7 +227,7 @@ protected:
     /// </summary>
     /// <param name="indexFrom"> search in pairs from this index</param>
     /// <returns>partial, full, index </returns>
-    tuple<bool, bool, size_t> CheckMatch(const size_t indexFrom) const
+    tuple<bool, bool, size_t> FindMatch(const size_t indexFrom) const
     {
         for (size_t i = indexFrom; i < rpairs_.size(); ++i)
         {
@@ -268,7 +268,7 @@ protected:
     }
 
     /// <summary>
-    ///   The end of the data sign has been received and the cached data need to be eithr send or replaced & send
+    ///   The end of the data sign has been received and the cached data need to be either send or replaced & send
     /// </summary>
     /// <param name="toProcess">characters received along with end of data sign</param>
     inline void DoReplacementsAtTheEndOfTheData(const char toProcess) const
@@ -283,7 +283,7 @@ protected:
             // for the rest of pairs
             for (size_t i = indexOfCached_; i < rpairs_.size(); ++i)
             {
-                const auto [partialMatch, fullMatch, matchPairIndex] = CheckMatch(i);
+                const auto [partialMatch, fullMatch, matchPairIndex] = FindMatch(i);
                 if (fullMatch)
                 { // need to send replacement
                     const auto& rpair = rpairs_[matchPairIndex];
@@ -342,7 +342,7 @@ void ChoiceReplacer::DoReplacements(const char toProcess, const bool aEod) const
         // for the pairs
         for (size_t i = indexOfCached_; i < rpairs_.size(); ++i)
         {
-            const auto [partialMatch, fullMatch, matchPairIndex] = CheckMatch(i);
+            const auto [partialMatch, fullMatch, matchPairIndex] = FindMatch(i);
             if (fullMatch)
             { // need to send replacement
                 const auto& rpair = rpairs_[matchPairIndex];
