@@ -189,8 +189,6 @@ class ChoiceReplacer final : public ReplacerWithNext
         span<const char> trg_;
     }ChoiceReplacerPair;
 
-    enum SearchMatchStrategy {full, any};
-
 public:
     /// <summary>
     ///   creating ChoiceReplacer from provided pairs
@@ -240,9 +238,9 @@ protected:
     ///       and provides type of match and matched length and index if found
     /// </summary>
     /// <param name="indexFrom"> search in pairs from this index</param>
-    /// <param name="strategy"> what type of match we want to find : full or any </param>
+    /// <param name="fullOnly"> what type of match we want to find : full or any </param>
     /// <returns>partial, full, length, index </returns>
-    tuple<bool, bool, size_t, size_t> FindMatch(const size_t indexFrom, SearchMatchStrategy strategy) const
+    tuple<bool, bool, size_t, size_t> FindMatch(const size_t indexFrom, const bool fullOnly) const
     {
         for (size_t i = indexFrom; i < rpairs_.size(); ++i)
         {
@@ -251,11 +249,11 @@ protected:
 
             if (0 == memcmp(srcSpan.data(), cachedData_.data(), cmpLength))
             { // match
-                if (const bool fullMatch = cmpLength == srcSpan.size(); fullMatch)
+                if (cmpLength == srcSpan.size())
                 {
                     return {false, true, cmpLength, i};
                 }
-                if (strategy == any)
+                if (!fullOnly)
                 {
                     return {true, false, cmpLength, i};
                 }
@@ -294,7 +292,7 @@ void ChoiceReplacer::ProcessLastCharacter(const char toProcess) const
 {
     while (cachedAmount_ > 0)
     {
-        auto [partialMatch, fullMatch, srcMatchedLength, destStringIdx] = FindMatch(indexOfPartialMatch_, full);
+        auto [partialMatch, fullMatch, srcMatchedLength, destStringIdx] = FindMatch(indexOfPartialMatch_, true);
         if (fullMatch)
         {
             MakeReplace(rpairs_[destStringIdx].trg_);
@@ -314,7 +312,7 @@ void ChoiceReplacer::ProcessCharacter(const char toProcess) const
     cachedData_[cachedAmount_++] = toProcess;
     while (cachedAmount_ > 0)
     {
-        auto [partialMatch, fullMatch, srcMatchedLength, matchPairIdx] = FindMatch(indexOfPartialMatch_, any);
+        auto [partialMatch, fullMatch, srcMatchedLength, matchPairIdx] = FindMatch(indexOfPartialMatch_, false);
         if (fullMatch)
         {
             MakeReplace(rpairs_[matchPairIdx].trg_);
