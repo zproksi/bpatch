@@ -281,7 +281,7 @@ protected:
             const size_t initialCached = cachedAmount_;
 
             // for the rest of pairs
-            for (size_t i = indexOfCached_; i < rpairs_.size(); ++i)
+            for (size_t i = indexOfPartialMatch_; i < rpairs_.size(); ++i)
             {
                 const auto [partialMatch, fullMatch, matchPairIndex] = FindMatch(i);
                 if (fullMatch)
@@ -293,7 +293,7 @@ protected:
                     break;
                 }
             }
-            indexOfCached_ = 0; // restart searching from 0 - no more incoming data supposed
+            indexOfPartialMatch_ = 0; // restart searching from 0 - no more incoming data supposed
 
             // if replacement did not happen, sending should happen anyway,
             //    because it is the end of the data stream
@@ -313,7 +313,7 @@ protected:
     vector<ChoiceReplacerPair> rpairs_;
 
     mutable size_t cachedAmount_ = 0; // we cache this amount of data
-    mutable size_t indexOfCached_ = 0; // at this index from rpairs_
+    mutable size_t indexOfPartialMatch_ = 0; // at this index from rpairs_
 
     // this is used to hold temporary data while the logic is 
     // looking for the new beginning of the cached value
@@ -340,7 +340,7 @@ void ChoiceReplacer::DoReplacements(const char toProcess, const bool aEod) const
     while (cachedAmount_ > 0)
     {
         // for the pairs
-        for (size_t i = indexOfCached_; i < rpairs_.size(); ++i)
+        for (size_t i = indexOfPartialMatch_; i < rpairs_.size(); ++i)
         {
             const auto [partialMatch, fullMatch, matchPairIndex] = FindMatch(i);
             if (fullMatch)
@@ -349,22 +349,22 @@ void ChoiceReplacer::DoReplacements(const char toProcess, const bool aEod) const
                 SendSpanFurther(rpair.trg_);  // send target after source match
 
                 ReleaseTheAmountFromTheCache(rpair.src_.size()); // remove matched source from the cache
-                indexOfCached_ = 0; // start from the very first pair of the lexemes again
+                indexOfPartialMatch_ = 0; // start from the very first pair of the lexemes again
                 return; // replacement happen
             }
 
             // for partial match it will be more optimal to start searching from the found index next time
             if (partialMatch)
             {
-                indexOfCached_ = matchPairIndex;
+                indexOfPartialMatch_ = matchPairIndex;
                 return; // new candidate for replacement
             }
-        }// for  (size_t i = indexOfCached_; i < rpairs_.size(); ++i)
+        }// for  (size_t i = indexOfPartialMatch_; i < rpairs_.size(); ++i)
 
         // send 1 byte, since no full, no partial match found
         pNext_->DoReplacements(cachedData_[0], false);
         shift_left(cachedData_.data(), cachedData_.data() + cachedAmount_--, 1);
-        indexOfCached_ = 0; // start from the very first pair of the lexemes again
+        indexOfPartialMatch_ = 0; // start from the very first pair of the lexemes again
     } // while (cachedAmount_ > 0)
 
     // cachedAmount_ is zero - nothing to send
