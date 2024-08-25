@@ -37,7 +37,7 @@ Domains where `bpatch` will be surely useful
   * [Building](#building)
   * [Unit Tests](#unit-tests)
   * [Integration Tests](#integration-tests)
-  * [Architectural Diagram](#architectural-diagram)
+  * [Architectural Diagrams](#architectural-diagrams)
   * [Contacts](#contacts)
   * [Copyright](#copyright)
   * [Reference](#reference)
@@ -131,9 +131,45 @@ The unit tests primarily cover the application's main functionality. A portion o
 Integration tests for the program have been designed as scripts. All required auxiliary files can be found in the 'IntegrationTests' folder. There are scripts both for Windows [`in_tests.cmd`][in_tests_cmd] and Linux [`in_tests.sh`][in_tests_sh].
 Execute the tests in the console by providing the script with the name of the `bpatch` executable as a parameter. Verify the absence of errors in the console output
 
-## Architectural Diagram
+## Architectural Diagrams
 
 There is an architectural diagram [`bpatch_uml.drawio`](./documentation/bpatch_uml.drawio) in drawio format in the documentation folder. [https://app.diagrams.net/](https://app.diagrams.net/) can be used for view
+
+
+**Diamod diagram for file IO classes**
+```mermaid
+classDiagram
+    direction TB
+    class Writer {
+        <<interface>>
+    }
+    class FileProcessing {
+    }
+    class WriteFileProcessing {
+    }
+    class ReadFileProcessing {
+    }
+    class ReadWriteFileProcessing {
+    }
+    class Reader {
+        <<interface>>
+    }
+    %% Relationships
+    FileProcessing <|-- ReadFileProcessing : inherits
+    FileProcessing <|-- WriteFileProcessing : inherits
+    ReadFileProcessing <|-- ReadWriteFileProcessing : inherits
+    WriteFileProcessing <|-- ReadWriteFileProcessing : inherits
+    ReadFileProcessing <|.. Reader : implements
+    WriteFileProcessing <|.. Writer : implements
+    %% Styling and notes
+    style Reader fill:#AAffAA,stroke:#000000
+    style Writer fill:#ffffAA,stroke:#000000
+    style ReadFileProcessing stroke:#AAffAA
+    style WriteFileProcessing stroke:#ffffAA
+    note for FileProcessing "Owns file descriptor and closes it"
+    note for ReadWriteFileProcessing "Owns one file descriptor only"
+    note for ReadWriteFileProcessing "Reader and Writer"
+```
 
 ## Contacts
 
