@@ -223,11 +223,11 @@ protected:
     /// <summary>
     ///    check for partial or full match of data from cachedData_
     ///       with any of lexemes sequentially
-    ///       and provides type of match and matched length and index if found
+    ///       and provides type of match and index of lexeme pairs if found
     /// </summary>
     /// <param name="indexFrom"> search in pairs from this index</param>
-    /// <returns>partial, full, length, index </returns>
-    tuple<bool, bool, size_t, size_t> CheckMatch(const size_t indexFrom) const
+    /// <returns>partial, full, index </returns>
+    tuple<bool, bool, size_t> CheckMatch(const size_t indexFrom) const
     {
         for (size_t i = indexFrom; i < rpairs_.size(); ++i)
         {
@@ -237,12 +237,75 @@ protected:
             if (0 == memcmp(srcSpan.data(), cachedData_.data(), cmpLength))
             { // match
                 const bool fullMatch = cmpLength == srcSpan.size();
-                return {!fullMatch, fullMatch, cmpLength, i};
+                return {!fullMatch, fullMatch, i};
             }
 
             // continue - no match here
         }
-        return {false, false, 0, 0};
+        return {false, false, 0};
+    }
+
+    /// <summary>
+    ///    Sends a span to the next Replacement (after source span match, for example)
+    /// </summary>
+    /// <param name="toSend">this span need to be sent</param>
+    inline void SendSpanFurther(const std::span<const char>& toSend) const
+    {
+        for (const char c : toSend)
+        {
+            pNext_->DoReplacements(c, false);
+        }
+    }
+
+    /// <summary>
+    ///   remove bytes from cache
+    /// </summary>
+    /// <param name="sz">how many characters to free from the Cache</param>
+    inline void ReleaseTheAmountFromTheCache(const size_t sz) const
+    {
+        shift_left(cachedData_.data(), cachedData_.data() + cachedAmount_, sz);
+        cachedAmount_ -= sz;
+    }
+
+    /// <summary>
+    ///   The end of the data sign has been received and the cached data need to be eithr send or replaced & send
+    /// </summary>
+    /// <param name="toProcess">characters received along with end of data sign</param>
+    inline void DoReplacementsAtTheEndOfTheData(const char toProcess) const
+    {
+        // no more data supposed during this run
+        // it is necessary to clean the cache inside this logic
+        while (cachedAmount_ > 0)
+        {
+            // to check if we send something or not
+            const size_t initialCached = cachedAmount_;
+
+            // for the rest of pairs
+            for (size_t i = indexOfCached_; i < rpairs_.size(); ++i)
+            {
+                const auto [partialMatch, fullMatch, matchPairIndex] = CheckMatch(i);
+                if (fullMatch)
+                { // need to send replacement
+                    const auto& rpair = rpairs_[matchPairIndex];
+                    SendSpanFurther(rpair.trg_); // send target after source match
+
+                    ReleaseTheAmountFromTheCache(rpair.src_.size()); // remove matched source from the cache
+                    break;
+                }
+            }
+            indexOfCached_ = 0; // restart searching from 0 - no more incoming data supposed
+
+            // if replacement did not happen, sending should happen anyway,
+            //    because it is the end of the data stream
+            if (initialCached == cachedAmount_)
+            {
+                // send 1 byte
+                pNext_->DoReplacements(cachedData_[0], false);
+                shift_left(cachedData_.data(), cachedData_.data() + cachedAmount_--, 1);
+            }
+        };
+
+        pNext_->DoReplacements(toProcess, true); // send end of the data further
     }
 
 protected:
@@ -260,47 +323,14 @@ protected:
 
 void ChoiceReplacer::DoReplacements(const char toProcess, const bool aEod) const
 {
-    if (nullptr == pNext_)
+    if (nullptr == pNext_) [[unlikely]]
     {
         throw logic_error("Replacement chain has been broken. Communicate with maintainer");
     }
 
-    // no more data
-    if (aEod)
+    if (aEod) [[unlikely]]
     {
-        while (cachedAmount_ > 0)
-        {
-            // to check if we send something or not
-            const size_t initialCached = cachedAmount_;
-
-            // for the rest of pairs
-            for (size_t i = indexOfCached_; i < rpairs_.size(); ++i)
-            {
-                auto [partial, full, length, index] = CheckMatch(i);
-                if (full)
-                { // need to send replacement
-                    const auto& rpair = rpairs_[index];
-                    for (size_t q = 0; q < rpair.trg_.size(); ++q) { pNext_->DoReplacements(rpair.trg_[q], false); }
-
-                    const size_t szProcessed = rpair.src_.size(); // matched source
-                    shift_left(cachedData_.data(), cachedData_.data() + cachedAmount_, szProcessed);
-
-                    cachedAmount_ -= szProcessed;
-                    break;
-                }
-            }
-            indexOfCached_ = 0; // now count from zero only
-
-            if (initialCached == cachedAmount_)
-            {
-                // send 1 byte
-                pNext_->DoReplacements(cachedData_[0], false);
-                shift_left(cachedData_.data(), cachedData_.data() + cachedAmount_, 1);
-                --cachedAmount_;
-            }
-        };
-
-        pNext_->DoReplacements(toProcess, aEod); // send end of the data further
+        DoReplacementsAtTheEndOfTheData(toProcess);
         return;
     } // if (aEod)
 
@@ -312,30 +342,28 @@ void ChoiceReplacer::DoReplacements(const char toProcess, const bool aEod) const
         // for the pairs
         for (size_t i = indexOfCached_; i < rpairs_.size(); ++i)
         {
-            auto [partial, full, length, index] = CheckMatch(i);
-            if (full)
+            const auto [partialMatch, fullMatch, matchPairIndex] = CheckMatch(i);
+            if (fullMatch)
             { // need to send replacement
-                const auto& rpair = rpairs_[index]; // send target at once
-                for (size_t q = 0; q < rpair.trg_.size(); ++q) { pNext_->DoReplacements(rpair.trg_[q], false); }
+                const auto& rpair = rpairs_[matchPairIndex];
+                SendSpanFurther(rpair.trg_);  // send target after source match
 
-                // what if the cached index other and length is less than cached
-                shift_left(cachedData_.data(), cachedData_.data() + cachedAmount_, length);
-                cachedAmount_ -= length;
+                ReleaseTheAmountFromTheCache(rpair.src_.size()); // remove matched source from the cache
                 indexOfCached_ = 0; // start from the very first pair of the lexemes again
-                return;
+                return; // replacement happen
             }
 
-            if (partial)
+            // for partial match it will be more optimal to start searching from the found index next time
+            if (partialMatch)
             {
-                indexOfCached_ = index;
-                return;
+                indexOfCached_ = matchPairIndex;
+                return; // new candidate for replacement
             }
         }// for  (size_t i = indexOfCached_; i < rpairs_.size(); ++i)
 
-        // send 1 byte
+        // send 1 byte, since no full, no partial match found
         pNext_->DoReplacements(cachedData_[0], false);
-        shift_left(cachedData_.data(), cachedData_.data() + cachedAmount_, 1);
-        --cachedAmount_;
+        shift_left(cachedData_.data(), cachedData_.data() + cachedAmount_--, 1);
         indexOfCached_ = 0; // start from the very first pair of the lexemes again
     } // while (cachedAmount_ > 0)
 
