@@ -220,27 +220,15 @@ public:
     void DoReplacements(const char toProcess, const bool aEod) const override;
 
 protected:
-    void ProcessLastCharacter(const char toProcess) const;
-    void ProcessCharacter(const char toProcess) const;
     /// <summary>
-    ///   Sends target to next replacers.
-    /// </summary>
-    /// <param name="target">the array we need to replace with</param>
-    void MakeReplace(span<const char> target) const;
-    /// <summary>
-    ///   Clean srcMatchedLength bytes of cache from the start
-    /// </summary>
-    /// <param name="srcMatchedLength">number of bytes we have to clear</param>
-    void CleanTheCache(size_t srcMatchedLength) const;
-    /// <summary>
-    ///    check for partial or full match of data from cachedData_
+    ///    check for partial or full match of the data from cachedData_
     ///       with any of lexemes sequentially
-    ///       and provides type of match and matched length and index if found
+    ///       and provides type of the match and index if found
     /// </summary>
     /// <param name="indexFrom"> search in pairs from this index</param>
-    /// <param name="fullOnly"> what type of match we want to find : full or any </param>
-    /// <returns>partial, full, length, index </returns>
-    tuple<bool, bool, size_t, size_t> FindMatch(const size_t indexFrom, const bool fullOnly) const
+    /// <param name="fullOnly"> what type of match we want to find : only full or partial also </param>
+    /// <returns>bool: partial, bool: full, size_t: index </returns>
+    tuple<bool, bool, size_t> FindMatch(const size_t indexFrom, const bool fullOnly) const
     {
         for (size_t i = indexFrom; i < rpairs_.size(); ++i)
         {
@@ -251,25 +239,71 @@ protected:
             { // match
                 if (cmpLength == srcSpan.size())
                 {
-                    return {false, true, cmpLength, i};
+                    return {false, true, i};
                 }
                 if (!fullOnly)
                 {
-                    return {true, false, cmpLength, i};
+                    return {true, false, i};
                 }
             }
-
             // continue - no match here
         }
-        return {false, false, 0, 0};
+        return {false, false, 0};
+    }
+
+    /// <summary>
+    ///   Sends target to next replacers, and resets partial match index to zero
+    /// </summary>
+    /// <param name="target">the array we need to send</param>
+    void SendAndResetPartialMatch(const span<const char>& target) const
+    {
+        for (const char c : target)
+        {
+            pNext_->DoReplacements(c, false);
+        }
+        indexOfPartialMatch_ = 0;
+    }
+
+    /// <summary>
+    ///   Clean srcMatchedLength bytes of cache from the beginning
+    /// </summary>
+    /// <param name="srcMatchedLength">number of bytes we have to clear</param>
+    void CleanTheCache(size_t srcMatchedLength) const
+    {
+        shift_left(cachedData_.data(), cachedData_.data() + cachedAmount_, static_cast<long>(srcMatchedLength));
+        cachedAmount_ -= srcMatchedLength;
+    }
+
+    /// <summary>
+    ///   The end of the data sign has been received and the cached data need to be either send or replaced & send
+    /// </summary>
+    /// <param name="toProcess">character received along with end of data sign</param>
+    void DoReplacementsAtTheEndOfTheData(const char toProcess) const
+    {
+        while (cachedAmount_ > 0)
+        {
+            const auto [partialMatch, fullMatch, matchPairIndex] = FindMatch(indexOfPartialMatch_, true);
+            if (fullMatch)
+            {
+                const auto& rpair = rpairs_[matchPairIndex];
+                SendAndResetPartialMatch(rpair.trg_);
+                CleanTheCache(rpair.src_.size());
+            }
+            else // No full match -> send 1 char from cache
+            {
+                SendAndResetPartialMatch(std::span<char> (cachedData_.data(), 1));
+                CleanTheCache(1);
+            }
+        }
+        pNext_->DoReplacements(toProcess, true);
     }
 
 protected:
     // our pairs sorted by priority - only one of them could be replaced for concrete pos
     vector<ChoiceReplacerPair> rpairs_;
 
-    mutable size_t cachedAmount_ = 0; // we cache this amount of data
-    mutable size_t indexOfPartialMatch_ = 0; // at this index from rpairs_, represents last partial match
+    mutable size_t cachedAmount_ = 0; // we cached this amount of data
+    mutable size_t indexOfPartialMatch_ = 0; // this index from rpairs_ represents last partial match
 
     // this is used to hold temporary data while the logic is 
     // looking for the new beginning of the cached value
@@ -282,67 +316,33 @@ void ChoiceReplacer::DoReplacements(const char toProcess, const bool aEod) const
     {
         throw logic_error("Replacement chain has been broken. Communicate with maintainer");
     }
+
     if (aEod) [[unlikely]]
-        ProcessLastCharacter(toProcess);
-    else
-        ProcessCharacter(toProcess);
-}
-
-void ChoiceReplacer::ProcessLastCharacter(const char toProcess) const
-{
-    while (cachedAmount_ > 0)
     {
-        auto [partialMatch, fullMatch, srcMatchedLength, destStringIdx] = FindMatch(indexOfPartialMatch_, true);
-        if (fullMatch)
-        {
-            MakeReplace(rpairs_[destStringIdx].trg_);
-            CleanTheCache(srcMatchedLength);
-        }
-        else // No full match -> send 1 char from cache
-        {
-            MakeReplace(std::span<char> (&cachedData_.front(), 1));
-            CleanTheCache(1);
-        }
+        DoReplacementsAtTheEndOfTheData(toProcess);
+        return;
     }
-    pNext_->DoReplacements(toProcess, true);
-}
 
-void ChoiceReplacer::ProcessCharacter(const char toProcess) const
-{
     cachedData_[cachedAmount_++] = toProcess;
     while (cachedAmount_ > 0)
     {
-        auto [partialMatch, fullMatch, srcMatchedLength, matchPairIdx] = FindMatch(indexOfPartialMatch_, false);
+        const auto [partialMatch, fullMatch, matchPairIndex] = FindMatch(indexOfPartialMatch_, false);
         if (fullMatch)
         {
-            MakeReplace(rpairs_[matchPairIdx].trg_);
-            CleanTheCache(srcMatchedLength);
+            const auto& rpair = rpairs_[matchPairIndex];
+            SendAndResetPartialMatch(rpair.trg_);
+            CleanTheCache(rpair.src_.size());
             return;
         }
         if (partialMatch)
         {
-            indexOfPartialMatch_ = matchPairIdx;
+            indexOfPartialMatch_ = matchPairIndex;
             return;
         }
         // No any match -> send 1 char from cache
-        MakeReplace(std::span<char> (&cachedData_.front(), 1));
+        SendAndResetPartialMatch(std::span<char> (cachedData_.data(), 1));
         CleanTheCache(1);
     }
-}
-
-inline void ChoiceReplacer::MakeReplace(span<const char> target) const
-{
-    for (const char elem : target)
-    {
-        pNext_->DoReplacements(elem, false);
-    }
-    indexOfPartialMatch_ = 0;
-}
-
-inline void ChoiceReplacer::CleanTheCache(size_t srcMatchedLength) const
-{
-    shift_left(cachedData_.data(), cachedData_.data() + cachedAmount_, static_cast<long>(srcMatchedLength));
-    cachedAmount_ -= srcMatchedLength;
 }
 
 namespace
