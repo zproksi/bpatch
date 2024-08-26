@@ -270,7 +270,9 @@ protected:
     /// <param name="srcMatchedLength">number of bytes we have to clear</param>
     void CleanTheCache(size_t srcMatchedLength) const
     {
-        shift_left(cachedData_.data(), cachedData_.data() + cachedAmount_, static_cast<long>(srcMatchedLength));
+        shift_left(cachedData_.data(),
+            cachedData_.data() + cachedAmount_,
+            static_cast<std::iterator_traits<decltype(cachedData_.data())>::difference_type>(srcMatchedLength));
         cachedAmount_ -= srcMatchedLength;
     }
 
