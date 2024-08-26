@@ -221,13 +221,14 @@ public:
 
 protected:
     /// <summary>
-    ///    check for partial or full match of data from cachedData_
+    ///    check for partial or full match of the data from cachedData_
     ///       with any of lexemes sequentially
-    ///       and provides type of match and matched length and index if found
+    ///       and provides type of the match and index if found
     /// </summary>
     /// <param name="indexFrom"> search in pairs from this index</param>
-    /// <returns>partial, full, length, index </returns>
-    tuple<bool, bool, size_t, size_t> CheckMatch(const size_t indexFrom) const
+    /// <param name="fullOnly"> what type of match we want to find : only full or partial also </param>
+    /// <returns>bool: partial, bool: full, size_t: index </returns>
+    tuple<bool, bool, size_t> FindMatch(const size_t indexFrom, const bool fullOnly) const
     {
         for (size_t i = indexFrom; i < rpairs_.size(); ++i)
         {
@@ -236,27 +237,80 @@ protected:
 
             if (0 == memcmp(srcSpan.data(), cachedData_.data(), cmpLength))
             { // match
-                const bool fullMatch = cmpLength == srcSpan.size();
-                return {!fullMatch, fullMatch, cmpLength, i};
+                if (cmpLength == srcSpan.size())
+                {
+                    return {false, true, i};
+                }
+                if (!fullOnly)
+                {
+                    return {true, false, i};
+                }
             }
-
             // continue - no match here
         }
-        return {false, false, 0, 0};
+        return {false, false, 0};
+    }
+
+    /// <summary>
+    ///   Sends target to next replacers, and resets partial match index to zero
+    /// </summary>
+    /// <param name="target">the array we need to send</param>
+    void SendAndResetPartialMatch(const span<const char>& target) const
+    {
+        for (const char c : target)
+        {
+            pNext_->DoReplacements(c, false);
+        }
+        indexOfPartialMatch_ = 0;
+    }
+
+    /// <summary>
+    ///   Clean srcMatchedLength bytes of cache from the beginning
+    /// </summary>
+    /// <param name="srcMatchedLength">number of bytes we have to clear</param>
+    void CleanTheCache(size_t srcMatchedLength) const
+    {
+        shift_left(cachedData_.data(),
+            cachedData_.data() + cachedAmount_,
+            static_cast<std::iterator_traits<decltype(cachedData_.data())>::difference_type>(srcMatchedLength));
+        cachedAmount_ -= srcMatchedLength;
+    }
+
+    /// <summary>
+    ///   The end of the data sign has been received and the cached data need to be either send or replaced & send
+    /// </summary>
+    /// <param name="toProcess">character received along with end of data sign</param>
+    void DoReplacementsAtTheEndOfTheData(const char toProcess) const
+    {
+        while (cachedAmount_ > 0)
+        {
+            const auto [partialMatch, fullMatch, matchPairIndex] = FindMatch(indexOfPartialMatch_, true);
+            if (fullMatch)
+            {
+                const auto& rpair = rpairs_[matchPairIndex];
+                SendAndResetPartialMatch(rpair.trg_);
+                CleanTheCache(rpair.src_.size());
+            }
+            else // No full match -> send 1 char from cache
+            {
+                SendAndResetPartialMatch(std::span<char> (cachedData_.data(), 1));
+                CleanTheCache(1);
+            }
+        }
+        pNext_->DoReplacements(toProcess, true);
     }
 
 protected:
     // our pairs sorted by priority - only one of them could be replaced for concrete pos
     vector<ChoiceReplacerPair> rpairs_;
 
-    mutable size_t cachedAmount_ = 0; // we cache this amount of data
-    mutable size_t indexOfCached_ = 0; // at this index from rpairs_
+    mutable size_t cachedAmount_ = 0; // we cached this amount of data
+    mutable size_t indexOfPartialMatch_ = 0; // this index from rpairs_ represents last partial match
 
     // this is used to hold temporary data while the logic is 
     // looking for the new beginning of the cached value
     mutable vector<char> cachedData_;
 };
-
 
 void ChoiceReplacer::DoReplacements(const char toProcess, const bool aEod) const
 {
@@ -265,83 +319,33 @@ void ChoiceReplacer::DoReplacements(const char toProcess, const bool aEod) const
         throw logic_error("Replacement chain has been broken. Communicate with maintainer");
     }
 
-    // no more data
-    if (aEod)
+    if (aEod) [[unlikely]]
     {
-        while (cachedAmount_ > 0)
-        {
-            // to check if we send something or not
-            const size_t initialCached = cachedAmount_;
-
-            // for the rest of pairs
-            for (size_t i = indexOfCached_; i < rpairs_.size(); ++i)
-            {
-                auto [partial, full, length, index] = CheckMatch(i);
-                if (full)
-                { // need to send replacement
-                    const auto& rpair = rpairs_[index];
-                    for (size_t q = 0; q < rpair.trg_.size(); ++q) { pNext_->DoReplacements(rpair.trg_[q], false); }
-
-                    const size_t szProcessed = rpair.src_.size(); // matched source
-                    shift_left(cachedData_.data(), cachedData_.data() + cachedAmount_, szProcessed);
-
-                    cachedAmount_ -= szProcessed;
-                    break;
-                }
-            }
-            indexOfCached_ = 0; // now count from zero only
-
-            if (initialCached == cachedAmount_)
-            {
-                // send 1 byte
-                pNext_->DoReplacements(cachedData_[0], false);
-                shift_left(cachedData_.data(), cachedData_.data() + cachedAmount_, 1);
-                --cachedAmount_;
-            }
-        };
-
-        pNext_->DoReplacements(toProcess, aEod); // send end of the data further
+        DoReplacementsAtTheEndOfTheData(toProcess);
         return;
-    } // if (aEod)
+    }
 
-
-    // set buffer of cached at once
     cachedData_[cachedAmount_++] = toProcess;
     while (cachedAmount_ > 0)
     {
-        // for the pairs
-        for (size_t i = indexOfCached_; i < rpairs_.size(); ++i)
+        const auto [partialMatch, fullMatch, matchPairIndex] = FindMatch(indexOfPartialMatch_, false);
+        if (fullMatch)
         {
-            auto [partial, full, length, index] = CheckMatch(i);
-            if (full)
-            { // need to send replacement
-                const auto& rpair = rpairs_[index]; // send target at once
-                for (size_t q = 0; q < rpair.trg_.size(); ++q) { pNext_->DoReplacements(rpair.trg_[q], false); }
-
-                // what if the cached index other and length is less than cached
-                shift_left(cachedData_.data(), cachedData_.data() + cachedAmount_, length);
-                cachedAmount_ -= length;
-                indexOfCached_ = 0; // start from the very first pair of the lexemes again
-                return;
-            }
-
-            if (partial)
-            {
-                indexOfCached_ = index;
-                return;
-            }
-        }// for  (size_t i = indexOfCached_; i < rpairs_.size(); ++i)
-
-        // send 1 byte
-        pNext_->DoReplacements(cachedData_[0], false);
-        shift_left(cachedData_.data(), cachedData_.data() + cachedAmount_, 1);
-        --cachedAmount_;
-        indexOfCached_ = 0; // start from the very first pair of the lexemes again
-    } // while (cachedAmount_ > 0)
-
-    // cachedAmount_ is zero - nothing to send
+            const auto& rpair = rpairs_[matchPairIndex];
+            SendAndResetPartialMatch(rpair.trg_);
+            CleanTheCache(rpair.src_.size());
+            return;
+        }
+        if (partialMatch)
+        {
+            indexOfPartialMatch_ = matchPairIndex;
+            return;
+        }
+        // No any match -> send 1 char from cache
+        SendAndResetPartialMatch(std::span<char> (cachedData_.data(), 1));
+        CleanTheCache(1);
+    }
 }
-
 
 namespace
 {
