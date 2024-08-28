@@ -139,7 +139,7 @@ There is an architectural diagram [`bpatch_uml.drawio`](./documentation/bpatch_u
 **Diamod diagram for file IO classes**
 ```mermaid
 classDiagram
-    direction TB
+    direction LR
     class Writer {
         <<interface>>
     }
@@ -160,15 +160,15 @@ classDiagram
     ReadFileProcessing <|-- ReadWriteFileProcessing : inherits
     WriteFileProcessing <|-- ReadWriteFileProcessing : inherits
     ReadFileProcessing <|.. Reader : implemented in
-    WriteFileProcessing <|.. Writer : implemened in
+    WriteFileProcessing <|.. Writer : implemented in
+
     %% Styling and notes
     style Reader fill:#AAffAA,stroke:#000000
     style Writer fill:#ffffAA,stroke:#000000
     style ReadFileProcessing stroke:#AAffAA
     style WriteFileProcessing stroke:#ffffAA
-    note for FileProcessing "Owns file descriptor and closes it"
-    note for ReadWriteFileProcessing "Owns one file descriptor only"
-    note for ReadWriteFileProcessing "Reader and Writer"
+    note for FileProcessing "Owns file descriptor\nand closes it"
+    note for ReadWriteFileProcessing "Owns one file descriptor\nReader and Writer"
 ```
 
 **Usage of IO classes**
