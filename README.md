@@ -186,7 +186,7 @@ stateDiagram-v2
     if_state --> ReadWriteFileProcessing: Yes
     if_state --> ReadFileProcessing : NO
     if_state --> WriteFileProcessing : NO
-    sc : Separate Classes
+    sc : Separate Instances
     state sc {
         direction LR
         ReadFileProcessing
@@ -197,10 +197,15 @@ stateDiagram-v2
     WriteFileProcessing --> Writer
     ReadWriteFileProcessing --> Writer
 
-    style Reader fill:#AAffAA
-    style Writer fill:#ffffAA
-    style ReadFileProcessing stroke:#AAffAA
-    style WriteFileProcessing stroke:#ffffAA
+    classDef clReader fill:#AAffAA,stroke:#000000
+    classDef clWriter fill:#ffffAA,stroke:#000000
+    classDef clReadFileProcessing stroke:#AAffAA
+    classDef clWriteFileProcessing stroke:#ffffAA
+
+    class Reader clReader
+    class Writer clWriter
+    class ReadFileProcessing clReadFileProcessing
+    class WriteFileProcessing clWriteFileProcessing
 ```
 
 
