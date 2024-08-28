@@ -170,7 +170,9 @@ classDiagram
     note for ReadWriteFileProcessing "Owns one file descriptor only"
     note for ReadWriteFileProcessing "Reader and Writer"
 ```
+
 **Usage of IO classes**
+
 ```mermaid
 ---
 title: IO Processing needs 2 interfaces Reader and Writer
@@ -194,8 +196,9 @@ stateDiagram-v2
     ReadWriteFileProcessing --> Reader
     WriteFileProcessing --> Writer
     ReadWriteFileProcessing --> Writer
-    style Reader fill:#AAffAA,stroke:#000000
-    style Writer fill:#ffffAA,stroke:#000000
+
+    style Reader fill:#AAffAA
+    style Writer fill:#ffffAA
     style ReadFileProcessing stroke:#AAffAA
     style WriteFileProcessing stroke:#ffffAA
 ```
