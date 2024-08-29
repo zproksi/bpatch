@@ -208,6 +208,56 @@ stateDiagram-v2
     class WriteFileProcessing clWriteFileProcessing
 ```
 
+**Sequence of the data processing**
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    lw : Loading Wildcharacters
+    [*] --> lw
+    state lw {
+        direction LR
+        fbm : List files by mask '?' and '*'
+    }
+    IterationF : For every found file
+    fbm --> IterationF
+
+    cr : create Reader
+    cw : create Writer
+    IterationF --> cr
+    IterationF --> cw
+    note left of IterationF
+        Separate Reader and Writer for every file
+    end note
+
+    lojp : Loading of JSON Parser
+    loaf : Loading of Actions
+    [*] --> lojp
+    lojp --> loaf
+
+    coac : create Of Actions Collection
+    note right of coac
+        Reusable Instace;
+        Can be used as separate adjustable by JSON
+        data stream modifier
+    end note
+
+    loaf --> coac
+    drrw : Do Read Replace Write
+    coac --> drrw
+    cr --> drrw
+    cw --> drrw
+
+    drrw --> [*]
+
+    classDef clReader fill:#AAffAA,stroke:#000000
+    classDef clWriter fill:#ffffAA,stroke:#000000
+    classDef acReplacer fill:#0ff0ff,font-weight:bold,stroke-width:2px
+
+    class cr clReader
+    class cw clWriter
+    class drrw acReplacer
+```
 
 ## Contacts
 
