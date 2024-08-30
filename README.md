@@ -133,9 +133,6 @@ Execute the tests in the console by providing the script with the name of the `b
 
 ## Architectural Diagrams
 
-There is an architectural diagram [`bpatch_uml.drawio`](./documentation/bpatch_uml.drawio) in drawio format in the documentation folder. [https://app.diagrams.net/](https://app.diagrams.net/) can be used for view
-
-
 **Diamod diagram for file IO classes**
 ```mermaid
 classDiagram
@@ -258,6 +255,52 @@ stateDiagram-v2
     class cw clWriter
     class drrw acReplacer
 ```
+
+**Interfaces of the data Processing**
+
+```mermaid
+classDiagram
+    class StreamReplacer {
+    StreamReplacer : virtual void DoReplacements(const char toProcess, const bool aEod) const = 0*
+    StreamReplacer : virtual void SetLastReplacer(unique_ptr~StreamReplacer~&& pNext) = 0*
+    StreamReplacer : static unique_ptr~StreamReplacer~ ReplacerLastInChain(Writer* const pWriter)
+    StreamReplacer : static unique_ptr~StreamReplacer~ CreateReplacer(StreamReplacerChoice& choice)
+    }
+
+    class TJsonCallBack
+    class ActionsCollection
+    note for ActionsCollection "Description:
+         1. ActionsCollection is TJsonCallBack for creation of the Dictionary
+            - set of pairs: source lexeme + result lexeme
+
+         2. ActionsCollection is StreamReplacer
+         Reader sends bytes to ActionsCollection. bytes are traveling through
+         Stream Replacers chain. Any source lexeme will be repleced with
+         result lexeme.
+
+         3. Last Stream Replacer in the chain aggregates the Writer interface
+
+         4. ActionsCollection can be reused to transform any amount of 
+         byte sequences"
+    TJsonCallBack "returns" .. AbstractBinaryLexeme
+    ActionsCollection *-- Dictionary
+    Dictionary *-- AbstractBinaryLexeme
+
+    class Reader
+    class Writer
+    TJsonCallBack --|> ActionsCollection
+    StreamReplacer --|> ActionsCollection
+    Reader <|--|> StreamReplacer
+    ActionsCollection *-- StreamReplacerInstance1
+    StreamReplacerInstance1 *-- "..." `etc... chain of replacers`
+    `etc... chain of replacers` o-- Writer
+
+    style Reader fill:#AAffAA,stroke:#000000
+    note for Writer "Last StreamReplacer Instance"
+    style Writer fill:#ffffAA,stroke:#000000
+    note for Reader "Produces data for\nthe chain of replacers"
+```
+
 
 ## Contacts
 
