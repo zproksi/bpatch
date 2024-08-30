@@ -66,6 +66,51 @@ public:
 
 };
 
+/// <summary>
+///     a class with some common methods for all replacers
+/// </summary>
+class BaseReplacer: public ReplacerWithNext
+{
+protected:
+    /// <summary>
+    ///   Sends target to next replacers, and resets partial match index to zero
+    /// </summary>
+    /// <param name="target">the array we need to send</param>
+    void SendFurther(const span<const char>& target) const
+    {
+        for (const char c : target)
+        {
+            pNext_->DoReplacements(c, false);
+        }
+    }
+};
+
+/// <summary>
+///     a class with some common methods for all replacers including cache
+/// </summary>
+class BaseReplacerWithCache: public BaseReplacer
+{
+protected:
+    /// <summary>
+    ///   Clean srcMatchedLength bytes of cache from the beginning
+    /// </summary>
+    /// <param name="srcMatchedLength">number of bytes we have to clear</param>
+    void CleanTheCache(size_t srcMatchedLength) const
+    {
+        shift_left(cachedData_.data(),
+            cachedData_.data() + cachedAmount_,
+            static_cast<std::iterator_traits<decltype(cachedData_.data())>::difference_type>(srcMatchedLength));
+        cachedAmount_ -= srcMatchedLength;
+    }
+
+protected:
+    mutable size_t cachedAmount_ = 0; // we cached this amount of data
+
+    // this is used to hold temporary data while the logic is
+    // looking for the new beginning of the cached value
+    mutable vector<char> cachedData_;
+};
+
 
 //--------------------------------------------------
 struct ReplacerPairHolder
@@ -83,7 +128,7 @@ struct ReplacerPairHolder
 
 //Description????
 /// The class finds the lexeme src_ and replaces it to trg_, the src_ and trg_ are non empty strings
-class UsualReplacer final : public ReplacerWithNext
+class UsualReplacer final : public BaseReplacerWithCache
 {
 public:
     UsualReplacer(unique_ptr<AbstractBinaryLexeme>& src,  // what to replace
@@ -98,24 +143,6 @@ public:
 
 protected:
     /// <summary>
-    ///   Sends target to next replacers, and resets partial match index to zero
-    /// </summary>
-    /// <param name="target">the array we need to send</param>
-    void SendFurther(const span<const char>& target) const
-    {
-        for (const char c : target)
-        {
-            pNext_->DoReplacements(c, false);
-        }
-    }
-    void CleanTheCache(size_t srcMatchedLength) const
-    {
-        shift_left(cachedData_.data(),
-            cachedData_.data() + cachedAmount_,
-            static_cast<std::iterator_traits<decltype(cachedData_.data())>::difference_type>(srcMatchedLength));
-        cachedAmount_ -= srcMatchedLength;
-    }
-    /// <summary>
     ///   We got the 'end' character so there are no match -> we should pass further all the cache
     /// </summary>
     /// <param name="toProcess">character received along with end of data sign</param>
@@ -127,12 +154,6 @@ protected:
     }
     const span<const char>& src_; // what to replace
     const span<const char>& trg_; // with what
-
-    mutable size_t cachedAmount_ = 0; // we cached this amount of data
-
-    // this is used to hold temporary data while the logic is 
-    // looking for the new beginning of the cached value
-    mutable vector<char> cachedData_;
 };
 
 
@@ -143,13 +164,14 @@ void UsualReplacer::DoReplacements(const char toProcess, const bool aEod) const
         throw logic_error("Replacement chain has been broken. Communicate with maintainer");
     }
 
-    if (aEod)
+    if (aEod) [[unlikely]]
     {
         DoReplacementsAtTheEndOfTheData(toProcess);
         return;
     }
 
     cachedData_[cachedAmount_++] = toProcess;
+    // our cachedData_ should contain only prefix of src_, otherwise -> clean the cache from the beginning
     while (cachedAmount_ > 0 && memcmp(cachedData_.data(), src_.data(), cachedAmount_) != 0)
     {
         SendFurther(std::span<char> (cachedData_.data(), 1));
@@ -185,7 +207,7 @@ static unique_ptr<StreamReplacer> CreateSimpleReplacer(
 ///      |--SRC N  TRG N  |
 ///
 /// Description????
-class ChoiceReplacer final : public ReplacerWithNext
+class ChoiceReplacer final : public BaseReplacerWithCache
 {
     typedef struct
     {
@@ -261,23 +283,8 @@ protected:
     /// <param name="target">the array we need to send</param>
     void SendAndResetPartialMatch(const span<const char>& target) const
     {
-        for (const char c : target)
-        {
-            pNext_->DoReplacements(c, false);
-        }
+        SendFurther(target);
         indexOfPartialMatch_ = 0;
-    }
-
-    /// <summary>
-    ///   Clean srcMatchedLength bytes of cache from the beginning
-    /// </summary>
-    /// <param name="srcMatchedLength">number of bytes we have to clear</param>
-    void CleanTheCache(size_t srcMatchedLength) const
-    {
-        shift_left(cachedData_.data(),
-            cachedData_.data() + cachedAmount_,
-            static_cast<std::iterator_traits<decltype(cachedData_.data())>::difference_type>(srcMatchedLength));
-        cachedAmount_ -= srcMatchedLength;
     }
 
     /// <summary>
@@ -308,12 +315,7 @@ protected:
     // our pairs sorted by priority - only one of them could be replaced for concrete pos
     vector<ChoiceReplacerPair> rpairs_;
 
-    mutable size_t cachedAmount_ = 0; // we cached this amount of data
     mutable size_t indexOfPartialMatch_ = 0; // this index from rpairs_ represents last partial match
-
-    // this is used to hold temporary data while the logic is 
-    // looking for the new beginning of the cached value
-    mutable vector<char> cachedData_;
 };
 
 void ChoiceReplacer::DoReplacements(const char toProcess, const bool aEod) const
@@ -360,11 +362,10 @@ namespace
 /// <summary>
 ///   replaces for lexemes of the same length
 /// </summary>
-class UniformLexemeReplacer final : public ReplacerWithNext
+class UniformLexemeReplacer final : public BaseReplacerWithCache
 {
 public:
     UniformLexemeReplacer(StreamReplacerChoice& choice, const size_t sz)
-        : cachedData_(sz)
     {
         for (AbstractLexemesPair& alpair : choice)
         {
@@ -379,29 +380,12 @@ public:
                 cout << coloredconsole::toconsole(warningDuplicatePattern) << endl;
             }
         }
+        cachedData_.resize(sz);
     }
 
     void DoReplacements(const char toProcess, const bool aEod) const override;
 
 protected:
-    /// <summary>
-    ///   Sends target to next replacers, and resets partial match index to zero
-    /// </summary>
-    /// <param name="target">the array we need to send</param>
-    void SendFurther(const span<const char>& target) const
-    {
-        for (const char c : target)
-        {
-            pNext_->DoReplacements(c, false);
-        }
-    }
-    void CleanTheCache(size_t srcMatchedLength) const
-    {
-        shift_left(cachedData_.data(),
-            cachedData_.data() + cachedAmount_,
-            static_cast<std::iterator_traits<decltype(cachedData_.data())>::difference_type>(srcMatchedLength));
-        cachedAmount_ -= srcMatchedLength;
-    }
     /// <summary>
     ///   We got the 'end' character so there are no match -> we should pass further all the cache
     /// </summary>
@@ -414,12 +398,6 @@ protected:
     }
     // here we hold pairs of sources and targets
     unordered_map<string_view, string_view> replaceOptions_;
-
-    mutable size_t cachedAmount_ = 0; // we cache this amount of data in the cachedData_
-
-    // this is used to hold temporary data while the logic is 
-    // looking for the new beginning of the cached value
-    mutable vector<char> cachedData_;
 };
 
 
@@ -431,7 +409,7 @@ void UniformLexemeReplacer::DoReplacements(const char toProcess, const bool aEod
     }
 
     // no more data
-    if (aEod)
+    if (aEod) [[unlikely]]
     {
         DoReplacementsAtTheEndOfTheData(toProcess);
         return;
@@ -439,7 +417,6 @@ void UniformLexemeReplacer::DoReplacements(const char toProcess, const bool aEod
 
     // set buffer of cached at once
     cachedData_[cachedAmount_++] = toProcess;
-
     if (cachedAmount_ == cachedData_.size())
     {
         if (const auto matchIt = replaceOptions_.find(string_view( cachedData_.data(), cachedAmount_)); matchIt != replaceOptions_.cend())
@@ -461,7 +438,7 @@ void UniformLexemeReplacer::DoReplacements(const char toProcess, const bool aEod
 /// <summary>
 ///   replaces for lexemes of the same length
 /// </summary>
-class LexemeOf1Replacer final : public ReplacerWithNext
+class LexemeOf1Replacer final : public BaseReplacer
 {
 public:
     LexemeOf1Replacer(StreamReplacerChoice& choice)
@@ -510,7 +487,7 @@ void LexemeOf1Replacer::DoReplacements(const char toProcess, const bool aEod) co
     if (replaces_[index].present_)
     {
         auto& trg = replaces_[index].trg_;
-        for (size_t q = 0; q < trg.size(); ++q) { pNext_->DoReplacements(trg[q], false); }
+        SendFurther(trg);
     }
     else
     {
