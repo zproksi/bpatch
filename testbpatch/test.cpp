@@ -761,6 +761,67 @@ TEST(ACollection, ActionsProcessing)
 
 
 /// <summary>
+///   check that we process LexemeOf1 with negative value correctly
+/// </summary>
+///
+TEST(ACollection, IndexCastText)
+{
+    TestData arrTests[] = {
+        {
+        R"(
+            {"dictionary":{
+                           "hexadecimal":{"someHex":["AB"], "minusOne":["FF"]}
+                          },
+             "todo":
+            [
+                {
+                    "replace": {"minusOne": "someHex"}
+                }
+            ]}
+        )",
+        { "\xFF\xFF", 2 },
+        { "\xAB\xAB", 2 }
+        },
+        {
+    R"(
+            {"dictionary":{
+                           "hexadecimal":{"first":["AD"], "someHex":["AB"], "minusOne":["FF"]}
+                          },
+             "todo":
+            [
+                {
+                    "replace": {"first": "minusOne", "minusOne": "someHex"}
+                }
+            ]}
+        )",
+    { "\xAD\xFF", 2 },
+    { "\xFF\xAB", 2 }
+        }
+    };
+    for (auto& tst : arrTests)
+    {
+        std::vector<char> vec(std::begin(tst.jsonData), std::end(tst.jsonData));
+
+        using namespace bpatch;
+        ActionsCollection ac(move(vec)); // processor
+        TestWriter tw; // here we accumulating data
+        ac.SetLastReplacer(StreamReplacer::ReplacerLastInChain(&tw)); // set write point
+
+
+        std::ranges::for_each(tst.testData, [&ac](const char c) {ac.DoReplacements(c, false); });
+        ac.DoReplacements('a', true);
+
+        EXPECT_TRUE(std::ranges::equal(tw.data_accumulator, tst.resultData));
+
+        tw.data_accumulator.clear(); // clear & crecheck
+        std::ranges::for_each(tst.testData, [&ac](const char c) {ac.DoReplacements(c, false); });
+        ac.DoReplacements('b', true);
+
+        EXPECT_TRUE(std::ranges::equal(tw.data_accumulator, tst.resultData));
+    }
+}
+
+/// <summary>
 ///    We need to prove that second usage of ActionsCollection class
 ///  will provide the same result
 /// </summary>
