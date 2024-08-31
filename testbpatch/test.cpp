@@ -854,21 +854,95 @@ TEST(ACollection, LexemeOf1Test)
         using namespace bpatch;
         ActionsCollection ac(move(vec)); // processor
         TestWriter tw; // here we accumulating data
-        ac.SetLastReplacer(StreamReplacer::ReplacerLastInChain(&tw)); // set write point
+        TestReader tr(tst.testData);
 
-
-        std::ranges::for_each(tst.testData, [&ac](const char c) {ac.DoReplacements(c, false); });
-        ac.DoReplacements('a', true);
+        ac.DoReadReplaceWrite(&tr, &tw);
 
         EXPECT_TRUE(std::ranges::equal(tw.data_accumulator, tst.resultData));
 
         tw.data_accumulator.clear(); // clear & crecheck
-        std::ranges::for_each(tst.testData, [&ac](const char c) {ac.DoReplacements(c, false); });
-        ac.DoReplacements('b', true);
+        ac.DoReadReplaceWrite(&tr, &tw);
 
         EXPECT_TRUE(std::ranges::equal(tw.data_accumulator, tst.resultData));
     }
 }
+
+
+/// <summary>
+///    We need to prove we can reuse once created and filled ActionsCollection
+/// </summary>
+///
+TEST(ACollection, ReusageOfActionsCollection)
+{
+    using namespace std;
+    using namespace bpatch;
+
+    string_view action =
+    R"(
+        {"dictionary":
+            {"text":
+                {"a":"a", "999":"999", "hi":"hi", "21":"21"}
+            },
+         "todo":
+        [
+            {
+                "replace": {
+                    "a": "999",
+                    "999": "a"
+                }
+            },
+            {
+                "replace": {
+                    "hi": "21",
+                    "21": "hi"
+                }
+            }
+        ]}
+    )";
+
+    vector<char> vec(begin(action), end(action));
+
+    ActionsCollection ac(move(vec)); // processor
+
+    TestWriter tw; // here we accumulating data
+    { // replace something
+        std::string_view src(R"(a + 1 = 1000)");
+        TestReader tr(src);
+        ac.DoReadReplaceWrite(&tr, &tw);
+
+        string_view rez = "999 + 1 = 1000";
+        EXPECT_TRUE(ranges::equal(tw.data_accumulator, rez));
+        tw.data_accumulator.clear();
+    }
+    { // replace everything
+        std::string_view src(R"(+a999hi21-)");
+        TestReader tr(src);
+        ac.DoReadReplaceWrite(&tr, &tw);
+
+        string_view rez = "+999a21hi-";
+        EXPECT_TRUE(ranges::equal(tw.data_accumulator, rez));
+        tw.data_accumulator.clear();
+    }
+    { // replace nothing
+        std::string_view src(R"(+328hj99gv1oyli54-)");
+        TestReader tr(src);
+        ac.DoReadReplaceWrite(&tr, &tw);
+
+        string_view rez = "+328hj99gv1oyli54-";
+        EXPECT_TRUE(ranges::equal(tw.data_accumulator, rez));
+        tw.data_accumulator.clear();
+    }
+    { // replace something
+        std::string_view src(R"(+hi 21-)");
+        TestReader tr(src);
+        ac.DoReadReplaceWrite(&tr, &tw);
+
+        string_view rez = "+21 hi-";
+        EXPECT_TRUE(ranges::equal(tw.data_accumulator, rez));
+        tw.data_accumulator.clear();
+    }
+}
+
 
 /// <summary>
 ///    We need to prove that second usage of ActionsCollection class
