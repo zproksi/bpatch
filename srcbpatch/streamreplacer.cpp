@@ -438,7 +438,7 @@ public:
     {
         for (AbstractLexemesPair& alpair : choice)
         {
-            const size_t index = static_cast<size_t>(*(reinterpret_cast<const unsigned char*>(alpair.first->access().data())));
+            const size_t index = static_cast<const size_t>(*(reinterpret_cast<const unsigned char*>(alpair.first->access().data())));
             if (replaces_[index].present_)
             {
                 cout << coloredconsole::toconsole(warningDuplicatePattern) << endl;
