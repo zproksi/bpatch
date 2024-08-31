@@ -135,6 +135,7 @@ Execute the tests in the console by providing the script with the name of the `b
 
 **Diamod diagram for file IO classes**
 ```mermaid
+classDiagram
     direction LR
     class Writer {
         <<interface>>
