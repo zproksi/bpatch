@@ -253,45 +253,56 @@ stateDiagram-v2
 
 ```mermaid
 classDiagram
-    class StreamReplacer {
-    StreamReplacer : virtual void DoReplacements(const char toProcess, const bool aEod) const = 0*
-    StreamReplacer : virtual void SetLastReplacer(unique_ptr~StreamReplacer~&& pNext) = 0*
-    StreamReplacer : static unique_ptr~StreamReplacer~ ReplacerLastInChain(Writer* const pWriter)
-    StreamReplacer : static unique_ptr~StreamReplacer~ CreateReplacer(StreamReplacerChoice& choice)
+    class ActionsCollection {
+        void DoReadReplaceWrite(Reader* const pReader, Writer* const pWriter)
     }
 
-    class TJsonCallBack
-    class ActionsCollection
     note for ActionsCollection "Description:
          1. ActionsCollection is TJsonCallBack for creation of the Dictionary
             - set of pairs: source lexeme + result lexeme
 
          2. ActionsCollection is StreamReplacer
-         Reader sends bytes to ActionsCollection. bytes are traveling through
-         Stream Replacers chain. Any source lexeme will be repleced with
-         result lexeme.
+         It holds a chain with StreamReplacers. Last StreamReplacer has a reference
+         to the ActionsCollection
 
-         3. Last Stream Replacer in the chain aggregates the Writer interface
+         3. ActionsCollection receives a Reader and a Writer as parameters,
+         reads data from the Reader, sends it to the chain, last StreamReplacer
+         from the chain transfers the result data to the ActionsCollection,
+         which uses the Writer to save the result
 
          4. ActionsCollection can be reused to transform any amount of 
          byte sequences"
+
     TJsonCallBack "returns" .. AbstractBinaryLexeme
     ActionsCollection *-- Dictionary
     Dictionary *-- AbstractBinaryLexeme
 
-    class Reader
-    class Writer
-    TJsonCallBack --|> ActionsCollection
-    StreamReplacer --|> ActionsCollection
-    Reader <|--|> StreamReplacer
-    ActionsCollection *-- StreamReplacerInstance1
-    StreamReplacerInstance1 *-- "..." `etc... chain of replacers`
-    `etc... chain of replacers` o-- Writer
+    namespace ReadingOfReplaceRules {
+        class TJsonCallBack
+        class Dictionary
+        class AbstractBinaryLexeme
+    }
+
+    StreamReplacer <|-- ActionsCollection
+    StreamReplacer "data flow" o--  ActionsCollection
+
+    class Reader {
+        <<Interface>>
+    }
+    class Writer {
+        <<Interface>>
+    }
+    TJsonCallBack <|-- ActionsCollection
+
+    Reader --o ActionsCollection
+    Writer --o ActionsCollection
+
+    ActionsCollection *-- `StreamReplacer Instance 1`
+    `StreamReplacer Instance 1` *-- "..." `etc... chain of StreamReplacer`
+    `etc... chain of StreamReplacer` *-- StreamReplacer
 
     style Reader fill:#AAffAA,stroke:#000000
-    note for Writer "Last StreamReplacer Instance"
     style Writer fill:#ffffAA,stroke:#000000
-    note for Reader "Produces data for\nthe chain of replacers"
 ```
 
 

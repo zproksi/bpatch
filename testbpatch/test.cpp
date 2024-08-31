@@ -555,12 +555,11 @@ namespace
 {
     using namespace bpatch;
     using namespace std;
-    // for emulate writer
+    // for emulate Writer
     class TestWriter final : public Writer
     {
     public:
         vector<char> data_accumulator;
-
 
         virtual size_t WriteCharacter(const char toProcess, const bool aEod) override
         {
@@ -571,7 +570,6 @@ namespace
             return aEod ? 0 : 1;
         };
 
-
         virtual size_t Written() const noexcept override
         {
             return data_accumulator.size();
@@ -579,21 +577,20 @@ namespace
     };
 
 
-    // for emulate reader
+    // for emulate Reader
     class TestReader final : public Reader
     {
         const string_view& testData_;
     public:
-        TestReader(string_view& atestData): testData_(atestData){}
-        virtual ~TestReader() = default;
+        TestReader(string_view& atestData): testData_(atestData)
+        {}
 
         virtual std::span<char> ReadData(const std::span<char>) override
         {
             return std::span<char>(const_cast<char*>(testData_.data()), testData_.size());
         }
 
-
-        virtual bool FileReaded()const noexcept override { return true; };
+        virtual bool FileReaded() const noexcept override { return true; };
 
         virtual size_t Readed() const noexcept override { return testData_.size(); };
     };

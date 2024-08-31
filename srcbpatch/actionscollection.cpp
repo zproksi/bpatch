@@ -447,23 +447,27 @@ void ActionsCollection::ProcessComposites()
 
 //--------------------------------------------------
 /// <summary>
-///   Replacer to last in chain. All incoming data should be trasferred to the ActionsCollection class
+///   Replacer to be the last in the chain
+/// All incoming data should be trasferred to the ActionsCollection class
+/// ActionsCollection class will transfer the data to the Writer interface
 /// </summary>
 class LastReplacer final : public StreamReplacer
 {
+    ActionsCollection* const pac_;
 public:
-    LastReplacer(ActionsCollection* const pac): pac_(pac){};
+    LastReplacer(ActionsCollection* const pac): pac_(pac)
+    {
+    }
 
     virtual void DoReplacements(const char toProcess, const bool aEod) const override
     {
         pac_->DoReplacements(toProcess, aEod);
     }
+
     virtual void SetLastReplacer(std::unique_ptr<StreamReplacer>&& pNext) override
     {
         pac_->SetLastReplacer(std::move(pNext));
     }
-protected:
-    ActionsCollection* const pac_;
 };
 //--------------------------------------------------
 
@@ -475,7 +479,7 @@ void ActionsCollection::CreateChainOfReplacers()
         ReportError("Nothing to replace in todo array of Actions file");
     }
 
-    // set us in the end of the replacers chain at once
+    // setup LastReplacer in the end of the replacers chain at once
     // `this` passed inside as a copy. ActionsCollection owns whole replacers chain
     replacersChain_.reset(new LastReplacer(this));
 
