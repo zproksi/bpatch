@@ -8,39 +8,6 @@ namespace bpatch
 using namespace std;
 
 //--------------------------------------------------
-/// <summary>
-///   Replacer to last in chain. All incoming data should be trasferred to a Writer interface
-/// </summary>
-class WriterReplacer final : public StreamReplacer
-{
-public:
-    WriterReplacer(Writer* const pWriter): pWriter_(pWriter){};
-
-    virtual void DoReplacements(const char toProcess, const bool aEod) const override;
-    virtual void SetLastReplacer(std::unique_ptr<StreamReplacer>&& pNext) override;
-protected:
-    Writer* const pWriter_;
-};
-
-
-void WriterReplacer::DoReplacements(const char toProcess, const bool aEod) const
-{
-    pWriter_->WriteCharacter(toProcess, aEod);
-}
-
-
-void WriterReplacer::SetLastReplacer(std::unique_ptr<StreamReplacer>&&)
-{
-    throw logic_error("Writer Replacer should be unchangeable. Contact with maintainer.");
-}
-
-
-unique_ptr<StreamReplacer> StreamReplacer::ReplacerLastInChain(Writer* const pWriter)
-{
-    return unique_ptr<StreamReplacer>(new WriterReplacer(pWriter));
-}
-
-//--------------------------------------------------
 
 /// <summary>
 ///     common part for set next replacer

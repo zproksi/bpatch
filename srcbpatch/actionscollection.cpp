@@ -139,9 +139,10 @@ bool IsReplaceObject(TJSONObject* const pJson)
 
 
 ActionsCollection::ActionsCollection(std::vector<char>&& dataSource)
-    : data_(std::move(dataSource))
+    : jsondata_(std::move(dataSource))
+    , readdata_(static_cast<std::vector<char>::size_type>(SZBUFF_FC))
 {
-    std::string_view srcView(data_.data(), data_.size());
+    std::string_view srcView(jsondata_.data(), jsondata_.size());
 
     [[maybe_unused]] TJSONObject::PTR_JSON everything = TJSONObject::CreateJSONObject(srcView, this);
 
@@ -271,20 +272,38 @@ void ActionsCollection::OnJsonArrayParsed(TJSONObject* const pJson)
     }
 }
 
+
 void ActionsCollection::DoReplacements(const char toProcess, const bool aEod) const
 {
-    replacersChain_->DoReplacements(toProcess, aEod);
+    // writing bytes - ActionsCollection is last in the replacers chain
+    pWriter_->WriteCharacter(toProcess, aEod);
 }
 
 
-void ActionsCollection::SetLastReplacer(std::unique_ptr<StreamReplacer>&& pNext)
+void ActionsCollection::SetLastReplacer(std::unique_ptr<StreamReplacer>&&)
 {
-    if (!pNext)
-    {
-        throw std::logic_error("Action Collection have not initilized properly. Contact with maintainer.");
-    }
-    replacersChain_->SetLastReplacer(std::move(pNext)); // now full chain in replacer
+    throw std::logic_error("Writer Replacer should be unchangeable. Contact with maintainer.");
 }
+
+
+void ActionsCollection::DoReadReplaceWrite(Reader* const pReader, Writer* const pWriter)
+{
+    pWriter_ = pWriter; // set pWriter for output - class being setup as last in the chain
+    using namespace std;
+    do
+    {
+        auto fullSpan = pReader->ReadData(span{readdata_.data(), SZBUFF_FC}); // read data
+        ranges::for_each(fullSpan,
+            [this](const char c)
+            {
+                replacersChain_->DoReplacements(c, false); // process data
+            }
+        );
+
+    } while (!pReader->FileReaded());
+    replacersChain_->DoReplacements('e', true); // only 'true' as sign of data end is important here
+}
+
 
 void ActionsCollection::ReportError(const char* const message)
 {
@@ -310,7 +329,7 @@ void ActionsCollection::ReportMissedNameError(const std::string_view& aname)
 std::string_view ActionsCollection::ParseDictionaryArray(TJSONObject* const pJson, const int base, const char* const errorMsg)
 {
     // here we will hold result string view
-    // actuallly since we are working with underlying data_
+    // actuallly since we are working with underlying jsondata_
     // we will modify data of json text in this logic
     // to form necessary string view
     char* pTarget = nullptr;
@@ -426,7 +445,27 @@ void ActionsCollection::ProcessComposites()
     composites_.clear();
 }
 
+//--------------------------------------------------
+/// <summary>
+///   Replacer to last in chain. All incoming data should be trasferred to the ActionsCollection class
+/// </summary>
+class LastReplacer final : public StreamReplacer
+{
+public:
+    LastReplacer(ActionsCollection* const pac): pac_(pac){};
 
+    virtual void DoReplacements(const char toProcess, const bool aEod) const override
+    {
+        pac_->DoReplacements(toProcess, aEod);
+    }
+    virtual void SetLastReplacer(std::unique_ptr<StreamReplacer>&& pNext) override
+    {
+        pac_->SetLastReplacer(std::move(pNext));
+    }
+protected:
+    ActionsCollection* const pac_;
+};
+//--------------------------------------------------
 
 
 void ActionsCollection::CreateChainOfReplacers()
@@ -435,6 +474,10 @@ void ActionsCollection::CreateChainOfReplacers()
     {
         ReportError("Nothing to replace in todo array of Actions file");
     }
+
+    // set us in the end of the replacers chain at once
+    // `this` passed inside as a copy. ActionsCollection owns whole replacers chain
+    replacersChain_.reset(new LastReplacer(this));
 
     for (auto rit = replaces_.crbegin(); rit != replaces_.crend(); ++rit) // from the end
     {

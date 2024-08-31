@@ -53,15 +53,6 @@ struct StreamReplacer
 public:
 
 /// <summary>
-///    creates a StreamReplacer for writing the lexemes to file
-/// Adding another StreamReplacer after adding this one leads to exception
-/// </summary>
-/// <param name="pWriter">writer interface</param>
-/// <returns>unique_ptr with object which should be last in chain of processing</returns>
-static std::unique_ptr<StreamReplacer> ReplacerLastInChain(Writer* const pWriter);
-
-
-/// <summary>
 ///  creates replacer for choose specific lexeme among others to replace
 /// </summary>
 /// <param name="choice">set of pairs of src & trg lexemes - one of which

@@ -10,6 +10,9 @@
 
 namespace bpatch
 {
+    class Reader;
+    class Writer;
+
 /// <summary>
 ///    class contains main entry points for processing.
 ///    * JSON parser callback to load settings for processing
@@ -52,6 +55,15 @@ public:
     void OnJsonArrayParsed(TJSONObject* const pJson) override;
 
     /// <summary>
+    ///   Do the data processing: read the source file,
+    /// pass the data to the replaicers chain, and pass result stream to the Writer
+    /// </summary>
+    /// <param name="pReader">where to pick the data</param>
+    /// <param name="pWriter">where to write the result data</param>
+    void DoReadReplaceWrite(Reader* const pReader, Writer* const pWriter);
+
+protected: // these two methods become protected
+    /// <summary>
     ///   callback from StreamReplacer
     /// </summary>
     /// <param name="toProcess">this char is under processing right now</param>
@@ -63,6 +75,10 @@ public:
     /// </summary>
     /// <param name="pNext">replacer to call next</param>
     virtual void SetLastReplacer(std::unique_ptr<StreamReplacer>&& pNext) override;
+
+    /// class which will use ActionsCollection as last
+    /// in replacers chain - for usage of the Writer interface
+    friend class LastReplacer;
 
 protected:
     /// <summary>
@@ -116,7 +132,7 @@ protected:
 protected:
     // this is data for json parsing
     // all lexemes from json file is inside
-    std::vector<char> data_;
+    std::vector<char> jsondata_;
 
     // here we hold all lexemes from our json
     Dictionary dictionary_;
@@ -135,6 +151,16 @@ protected:
     ///  here we are holding chain of the replacers
     /// </summary>
     std::unique_ptr<StreamReplacer> replacersChain_;
+
+    /// <summary>
+    ///  holds Writer call back for the data processing
+    /// </summary>
+    Writer* pWriter_;
+
+    /// <summary>
+    ///  holds cached data during reading from Reader interface
+    /// </summary>
+    std::vector<char> readdata_;
 
 private:
     // all replaces, will be cleared after initialization; need temporary object for loading/initialization only

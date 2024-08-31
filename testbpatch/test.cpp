@@ -551,11 +551,12 @@ TEST(ACollection, ActionsProcessingInvalid)
 }
 
 
-namespace // for emulate writer
+namespace
 {
     using namespace bpatch;
     using namespace std;
-    class TestWriter : public Writer
+    // for emulate writer
+    class TestWriter final : public Writer
     {
     public:
         vector<char> data_accumulator;
@@ -577,11 +578,32 @@ namespace // for emulate writer
         }
     };
 
+
+    // for emulate reader
+    class TestReader final : public Reader
+    {
+        const string_view& testData_;
+    public:
+        TestReader(string_view& atestData): testData_(atestData){}
+        virtual ~TestReader() = default;
+
+        virtual std::span<char> ReadData(const std::span<char>) override
+        {
+            return std::span<char>(const_cast<char*>(testData_.data()), testData_.size());
+        }
+
+
+        virtual bool FileReaded()const noexcept override { return true; };
+
+        virtual size_t Readed() const noexcept override { return testData_.size(); };
+    };
+
+
     struct TestData
     {
-        std::string_view jsonData;
-        std::string_view testData;
-        std::string_view resultData;
+        string_view jsonData;
+        string_view testData;
+        string_view resultData;
     };
 
 }; // namespace
@@ -743,17 +765,14 @@ TEST(ACollection, ActionsProcessing)
         using namespace bpatch;
         ActionsCollection ac(move(vec)); // processor
         TestWriter tw; // here we accumulating data
-        ac.SetLastReplacer(StreamReplacer::ReplacerLastInChain(&tw)); // set write point
+        TestReader tr(tst.testData);
 
-
-        std::ranges::for_each(tst.testData, [&ac](const char c) {ac.DoReplacements(c, false); });
-        ac.DoReplacements('a', true);
+        ac.DoReadReplaceWrite(&tr, &tw);
 
         EXPECT_TRUE(std::ranges::equal(tw.data_accumulator, tst.resultData));
 
         tw.data_accumulator.clear(); // clear & crecheck
-        std::ranges::for_each(tst.testData, [&ac](const char c) {ac.DoReplacements(c, false); });
-        ac.DoReplacements('b', true);
+        ac.DoReadReplaceWrite(&tr, &tw);
 
         EXPECT_TRUE(std::ranges::equal(tw.data_accumulator, tst.resultData));
     }
@@ -1105,16 +1124,14 @@ TEST(ACollection, MultipleUsageOfProcessing)
         using namespace bpatch;
         ActionsCollection ac(move(vec)); // processor
         TestWriter tw; // here we accumulating data
-        ac.SetLastReplacer(StreamReplacer::ReplacerLastInChain(&tw)); // set write point
+        TestReader tr(tst.testData);
 
+        ac.DoReadReplaceWrite(&tr, &tw);
 
-        std::ranges::for_each(tst.testData, [&ac](const char c) {ac.DoReplacements(c, false); });
-        ac.DoReplacements('c', true);
         EXPECT_TRUE(std::ranges::equal(tw.data_accumulator, tst.resultData));
 
         tw.data_accumulator.clear(); // clear & crecheck
-        std::ranges::for_each(tst.testData, [&ac](const char c) {ac.DoReplacements(c, false); });
-        ac.DoReplacements('d', true);
+        ac.DoReadReplaceWrite(&tr, &tw);
 
         EXPECT_TRUE(std::ranges::equal(tw.data_accumulator, tst.resultData));
     }
