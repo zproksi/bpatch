@@ -17,17 +17,17 @@ namespace
 {
     struct ProcessingInfo
     {
-        std::string_view file_source = "";
-        std::string_view file_target = "";
-        std::string_view file_actions = "";
+        string_view file_source = "";
+        string_view file_target = "";
+        string_view file_actions = "";
         bool overwrite = false;
     };
 
     struct FileProcessingInfo
     {
-        std::unique_ptr<ActionsCollection>& todo;
-        std::string& src;
-        std::string& dst;
+        unique_ptr<ActionsCollection>& todo;
+        string& src;
+        string& dst;
         const bool overwrite;
         size_t readed;
         size_t written;
@@ -72,7 +72,7 @@ void DoReadReplaceWrite(unique_ptr<ActionsCollection>& todo, Reader* const pRead
     {
         auto fullSpan = pReader->ReadData(dataHolder);
 
-        std::ranges::for_each(fullSpan, [&todo](const char c) {todo->DoReplacements(c, false); });
+        ranges::for_each(fullSpan, [&todo](const char c) {todo->DoReplacements(c, false); });
 
     }while (!pReader->FileReaded());
     todo->DoReplacements('e', true); // only 'true' as sign of data end is important here
@@ -116,7 +116,7 @@ bool ProcessTheFile(FileProcessingInfo& jobInfo)
     if (!jobInfo.overwrite &&
         filesystem::exists(jobInfo.dst, ec))
     { // check override possibility
-        std::cout << coloredconsole::toconsole("Warning: Target file '") << jobInfo.dst << "' exists. "
+        cout << coloredconsole::toconsole("Warning: Target file '") << jobInfo.dst << "' exists. "
             "Use /w instead of /t to overwrite.\n Processing skipped\n";
         jobInfo.written = 0;
         jobInfo.readed = 0;
@@ -163,18 +163,18 @@ bool ProcessFilesByMask(ProcessingInfo& jobInfo)
     FileProcessingInfo fileInfo{.todo = todo, .src = srcFilename, .dst = dstFilename, .overwrite = jobInfo.overwrite};
     while (lookupMasks.NextFilenamesPair(srcFilename, dstFilename)) // request file names
     {
-        std::cout << "Source file:          '" << fileInfo.src << "'\n";
-        std::cout << "Target file:          '" << fileInfo.dst << "'\n";
+        cout << "Source file:          '" << fileInfo.src << "'\n";
+        cout << "Target file:          '" << fileInfo.dst << "'\n";
         if (bpatch::ProcessTheFile(fileInfo))
         {
             ++filesProcessed;
         }
 
-        std::cout << "Readed (bytes):       '" << fileInfo.readed << "'\n";
-        std::cout << "Written (bytes):      '" << fileInfo.written << "'\n";
-        std::cout << "\n";
+        cout << "Readed (bytes):       '" << fileInfo.readed << "'\n";
+        cout << "Written (bytes):      '" << fileInfo.written << "'\n";
+        cout << "\n";
     };
-    std::cout << "Files processed:      '" << filesProcessed << "'\n";
+    cout << "Files processed:      '" << filesProcessed << "'\n";
 
     return true;
 }
@@ -196,18 +196,18 @@ bool Processing(int argc, char* argv[])
     TimeMeasurer fulltime("Processing took");
     if (!parametersReader.ReadConsoleParameters(argc, argv))
     {
-        std::cout << parametersReader.Manual();
+        cout << parametersReader.Manual();
         return false;
     }
 
     int retValue = false;
     try
     {
-        std::cout << "\n";
-        std::cout << "Executable:           '" << argv[0] << "'\n";
-        std::cout << "Current folder:       '" << std::filesystem::current_path() << "'\n";
-        std::cout << "Actions folder:       '" << FolderActions() << "'\n";
-        std::cout << "Binary data folder:   '" << FolderBinaryPatterns() << "'\n";
+        cout << "\n";
+        cout << "Executable:           '" << argv[0] << "'\n";
+        cout << "Current folder:       '" << filesystem::current_path() << "'\n";
+        cout << "Actions folder:       '" << FolderActions() << "'\n";
+        cout << "Binary data folder:   '" << FolderBinaryPatterns() << "'\n";
 
         ProcessingInfo jobInfo{
             .file_source = parametersReader.Source(),
@@ -218,49 +218,49 @@ bool Processing(int argc, char* argv[])
 
         retValue = bpatch::ProcessFilesByMask(jobInfo);
     }
-    catch (std::filesystem::filesystem_error const& ex)
+    catch (filesystem::filesystem_error const& ex)
     {
-        std::cerr << toconsole("file system ERROR: ") << ex.what() << '\n'
+        cerr << toconsole("file system ERROR: ") << ex.what() << '\n'
             << "path1: " << ex.path1() << '\n'
             << "path2: " << ex.path2() << '\n'
             << "value: " << ex.code().value() << '\n'
             << "message:  " << ex.code().message() << '\n'
             << "category: " << ex.code().category().name() << '\n';
     }
-    catch (std::range_error& rExc) // must be before runtime_error
+    catch (range_error& rExc) // must be before runtime_error
     {
-        std::cerr << toconsole("range ERROR: \"")
+        cerr << toconsole("range ERROR: \"")
             << rExc.what()
             << "\""
-            << std::endl;
+            << endl;
     }
-    catch (std::runtime_error& rExc)
+    catch (runtime_error& rExc)
     {
-        std::cerr << toconsole("runtime ERROR: \"")
+        cerr << toconsole("runtime ERROR: \"")
             << rExc.what()
             << "\""
-            << std::endl;
+            << endl;
     }
-    catch (std::out_of_range& rExc) // must be before logic_error
+    catch (out_of_range& rExc) // must be before logic_error
     {
-        std::cerr << toconsole("out of range ERROR: \"")
+        cerr << toconsole("out of range ERROR: \"")
             << rExc.what()
             << "\""
-            << std::endl;
+            << endl;
     }
-    catch (std::logic_error& rExc)
+    catch (logic_error& rExc)
     {
-        std::cerr << toconsole("logic ERROR: \"")
+        cerr << toconsole("logic ERROR: \"")
             << rExc.what()
             << "\""
-            << std::endl;
+            << endl;
     }
-    catch (std::exception& rExc)
+    catch (exception& rExc)
     {
-        std::cerr << toconsole("ERROR: \"")
+        cerr << toconsole("ERROR: \"")
             << rExc.what()
             << "\""
-            << std::endl;
+            << endl;
     }
 
     return retValue;

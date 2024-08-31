@@ -37,7 +37,7 @@ Domains where `bpatch` will be surely useful
   * [Building](#building)
   * [Unit Tests](#unit-tests)
   * [Integration Tests](#integration-tests)
-  * [Architectural Diagram](#architectural-diagram)
+  * [Architectural Diagrams](#architectural-diagrams)
   * [Contacts](#contacts)
   * [Copyright](#copyright)
   * [Reference](#reference)
@@ -131,9 +131,169 @@ The unit tests primarily cover the application's main functionality. A portion o
 Integration tests for the program have been designed as scripts. All required auxiliary files can be found in the 'IntegrationTests' folder. There are scripts both for Windows [`in_tests.cmd`][in_tests_cmd] and Linux [`in_tests.sh`][in_tests_sh].
 Execute the tests in the console by providing the script with the name of the `bpatch` executable as a parameter. Verify the absence of errors in the console output
 
-## Architectural Diagram
+## Architectural Diagrams
 
-There is an architectural diagram [`bpatch_uml.drawio`](./documentation/bpatch_uml.drawio) in drawio format in the documentation folder. [https://app.diagrams.net/](https://app.diagrams.net/) can be used for view
+**Diamod diagram for file IO classes**
+```mermaid
+classDiagram
+    direction LR
+    class Writer {
+        <<interface>>
+    }
+
+    %% Relationships
+    FileProcessing <|-- ReadFileProcessing : inherits
+    ReadFileProcessing <|.. Reader : implemented in
+    FileProcessing <|-- WriteFileProcessing : inherits
+    WriteFileProcessing <|-- ReadWriteFileProcessing : inherits
+    ReadFileProcessing <|-- ReadWriteFileProcessing : inherits
+    WriteFileProcessing <|.. Writer : implemented in
+
+    class Reader {
+        <<interface>>
+    }
+
+    %% Styling and notes
+    style Reader fill:#AAffAA,stroke:#000000
+    style Writer fill:#ffffAA,stroke:#000000
+    style ReadFileProcessing stroke:#AAffAA,stroke-width:3px
+    style WriteFileProcessing stroke:#ffffAA,stroke-width:3px
+    note for FileProcessing "Owns file descriptor\nand closes it"
+```
+
+**Usage of IO classes**
+
+```mermaid
+---
+title: IO Processing needs 2 interfaces Reader and Writer
+---
+stateDiagram-v2
+    direction LR
+    state if_state <<choice>>
+    ioffraw : Is One File For Read And Write
+    [*] --> ioffraw
+    ioffraw --> if_state
+    if_state --> ReadWriteFileProcessing: Yes
+    if_state --> ReadFileProcessing : NO
+    if_state --> WriteFileProcessing : NO
+    sc : Separate Instances
+    state sc {
+        direction LR
+        ReadFileProcessing
+        WriteFileProcessing
+    }
+    ReadFileProcessing --> Reader
+    ReadWriteFileProcessing --> Reader
+    WriteFileProcessing --> Writer
+    ReadWriteFileProcessing --> Writer
+
+    classDef clReader fill:#AAffAA,stroke:#000000
+    classDef clWriter fill:#ffffAA,stroke:#000000
+    classDef clReadFileProcessing stroke:#AAffAA,stroke-width:3px
+    classDef clWriteFileProcessing stroke:#ffffAA,stroke-width:3px
+
+    class Reader clReader
+    class Writer clWriter
+    class ReadFileProcessing clReadFileProcessing
+    class WriteFileProcessing clWriteFileProcessing
+```
+
+**Sequence of the data processing**
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    lw : Loading Wildcharacters
+    [*] --> lw
+    state lw {
+        direction LR
+        fbm : List files by mask '?' and '*'
+    }
+    IterationF : For every found file
+    fbm --> IterationF
+
+    cr : create Reader
+    cw : create Writer
+    IterationF --> cr
+    IterationF --> cw
+    note left of IterationF
+        Separate Reader and Writer for every file
+    end note
+
+    lojp : Loading of JSON Parser
+    loaf : Loading of Actions
+    [*] --> lojp
+    lojp --> loaf
+
+    coac : create Of Actions Collection
+    note right of coac
+        Reusable Instace;
+        Can be used as separate adjustable by JSON
+        data stream modifier
+    end note
+
+    loaf --> coac
+    drrw : Do Read Replace Write
+    coac --> drrw
+    cr --> drrw
+    cw --> drrw
+
+    drrw --> [*]
+
+    classDef clReader fill:#AAffAA,stroke:#000000
+    classDef clWriter fill:#ffffAA,stroke:#000000
+    classDef acReplacer fill:#0ff0ff,font-weight:bold,stroke-width:2px
+
+    class cr clReader
+    class cw clWriter
+    class drrw acReplacer
+```
+
+**Interfaces of the data Processing**
+
+```mermaid
+classDiagram
+    class StreamReplacer {
+    StreamReplacer : virtual void DoReplacements(const char toProcess, const bool aEod) const = 0*
+    StreamReplacer : virtual void SetLastReplacer(unique_ptr~StreamReplacer~&& pNext) = 0*
+    StreamReplacer : static unique_ptr~StreamReplacer~ ReplacerLastInChain(Writer* const pWriter)
+    StreamReplacer : static unique_ptr~StreamReplacer~ CreateReplacer(StreamReplacerChoice& choice)
+    }
+
+    class TJsonCallBack
+    class ActionsCollection
+    note for ActionsCollection "Description:
+         1. ActionsCollection is TJsonCallBack for creation of the Dictionary
+            - set of pairs: source lexeme + result lexeme
+
+         2. ActionsCollection is StreamReplacer
+         Reader sends bytes to ActionsCollection. bytes are traveling through
+         Stream Replacers chain. Any source lexeme will be repleced with
+         result lexeme.
+
+         3. Last Stream Replacer in the chain aggregates the Writer interface
+
+         4. ActionsCollection can be reused to transform any amount of 
+         byte sequences"
+    TJsonCallBack "returns" .. AbstractBinaryLexeme
+    ActionsCollection *-- Dictionary
+    Dictionary *-- AbstractBinaryLexeme
+
+    class Reader
+    class Writer
+    TJsonCallBack --|> ActionsCollection
+    StreamReplacer --|> ActionsCollection
+    Reader <|--|> StreamReplacer
+    ActionsCollection *-- StreamReplacerInstance1
+    StreamReplacerInstance1 *-- "..." `etc... chain of replacers`
+    `etc... chain of replacers` o-- Writer
+
+    style Reader fill:#AAffAA,stroke:#000000
+    note for Writer "Last StreamReplacer Instance"
+    style Writer fill:#ffffAA,stroke:#000000
+    note for Reader "Produces data for\nthe chain of replacers"
+```
+
 
 ## Contacts
 
