@@ -904,42 +904,20 @@ TEST(ACollection, ReusageOfActionsCollection)
 
     ActionsCollection ac(move(vec)); // processor
 
-    TestWriter tw; // here we accumulating data
-    { // replace something
-        std::string_view src(R"(a + 1 = 1000)");
-        TestReader tr(src);
-        ac.DoReadReplaceWrite(&tr, &tw);
+    TestData arrTests[] =
+    {
+        {"", R"(a + 1 = 1000)", "999 + 1 = 1000"}, // replace something
+        {"", "+a999hi21-", "+999a21hi-"}, // replace everything
+        {"", R"(+328hj99gv1oyli54-)", R"(+328hj99gv1oyli54-)"}, // replace nothing
+        {"", R"(+hi 21-)", "+21 hi-"}, // replace something
+    };
+    for (auto& tst : arrTests)
+    {
+        TestWriter tw;
+        TestReader tr(tst.testData);
 
-        string_view rez = "999 + 1 = 1000";
-        EXPECT_TRUE(ranges::equal(tw.data_accumulator, rez));
-        tw.data_accumulator.clear();
-    }
-    { // replace everything
-        std::string_view src(R"(+a999hi21-)");
-        TestReader tr(src);
         ac.DoReadReplaceWrite(&tr, &tw);
-
-        string_view rez = "+999a21hi-";
-        EXPECT_TRUE(ranges::equal(tw.data_accumulator, rez));
-        tw.data_accumulator.clear();
-    }
-    { // replace nothing
-        std::string_view src(R"(+328hj99gv1oyli54-)");
-        TestReader tr(src);
-        ac.DoReadReplaceWrite(&tr, &tw);
-
-        string_view rez = "+328hj99gv1oyli54-";
-        EXPECT_TRUE(ranges::equal(tw.data_accumulator, rez));
-        tw.data_accumulator.clear();
-    }
-    { // replace something
-        std::string_view src(R"(+hi 21-)");
-        TestReader tr(src);
-        ac.DoReadReplaceWrite(&tr, &tw);
-
-        string_view rez = "+21 hi-";
-        EXPECT_TRUE(ranges::equal(tw.data_accumulator, rez));
-        tw.data_accumulator.clear();
+        EXPECT_TRUE(ranges::equal(tw.data_accumulator, tst.resultData));
     }
 }
 
