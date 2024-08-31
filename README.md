@@ -135,37 +135,29 @@ Execute the tests in the console by providing the script with the name of the `b
 
 **Diamod diagram for file IO classes**
 ```mermaid
-classDiagram
     direction LR
     class Writer {
         <<interface>>
     }
-    class FileProcessing {
-    }
-    class WriteFileProcessing {
-    }
-    class ReadFileProcessing {
-    }
-    class ReadWriteFileProcessing {
-    }
+
+    %% Relationships
+    FileProcessing <|-- ReadFileProcessing : inherits
+    ReadFileProcessing <|.. Reader : implemented in
+    FileProcessing <|-- WriteFileProcessing : inherits
+    WriteFileProcessing <|-- ReadWriteFileProcessing : inherits
+    ReadFileProcessing <|-- ReadWriteFileProcessing : inherits
+    WriteFileProcessing <|.. Writer : implemented in
+
     class Reader {
         <<interface>>
     }
-    %% Relationships
-    FileProcessing <|-- ReadFileProcessing : inherits
-    FileProcessing <|-- WriteFileProcessing : inherits
-    ReadFileProcessing <|-- ReadWriteFileProcessing : inherits
-    WriteFileProcessing <|-- ReadWriteFileProcessing : inherits
-    ReadFileProcessing <|.. Reader : implemented in
-    WriteFileProcessing <|.. Writer : implemented in
 
     %% Styling and notes
     style Reader fill:#AAffAA,stroke:#000000
     style Writer fill:#ffffAA,stroke:#000000
-    style ReadFileProcessing stroke:#AAffAA
-    style WriteFileProcessing stroke:#ffffAA
+    style ReadFileProcessing stroke:#AAffAA,stroke-width:3px
+    style WriteFileProcessing stroke:#ffffAA,stroke-width:3px
     note for FileProcessing "Owns file descriptor\nand closes it"
-    note for ReadWriteFileProcessing "Owns one file descriptor\nReader and Writer"
 ```
 
 **Usage of IO classes**
@@ -196,8 +188,8 @@ stateDiagram-v2
 
     classDef clReader fill:#AAffAA,stroke:#000000
     classDef clWriter fill:#ffffAA,stroke:#000000
-    classDef clReadFileProcessing stroke:#AAffAA
-    classDef clWriteFileProcessing stroke:#ffffAA
+    classDef clReadFileProcessing stroke:#AAffAA,stroke-width:3px
+    classDef clWriteFileProcessing stroke:#ffffAA,stroke-width:3px
 
     class Reader clReader
     class Writer clWriter
