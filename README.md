@@ -189,7 +189,7 @@ stateDiagram-v2
     classDef clReader fill:#AAffAA,stroke:#000000
     classDef clWriter fill:#ffffAA,stroke:#000000
     classDef clReadFileProcessing stroke:#AAffAA,stroke-width:3px
-    classDef clWriteFileProcessing stroke:#ffffAA,stroke-width:2px
+    classDef clWriteFileProcessing stroke:#ffffAA,stroke-width:3px
 
     class Reader clReader
     class Writer clWriter
