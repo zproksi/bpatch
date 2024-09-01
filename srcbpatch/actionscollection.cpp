@@ -338,7 +338,7 @@ std::string_view ActionsCollection::ParseDictionaryArray(TJSONObject* const pJso
 
         unsigned char c = 0;
         std::from_chars_result rez =
-            std::from_chars(value.data(), value.data() + value.length(),
+            std::from_chars(value.data(), value.data() + value.size(),
                 c, base);
         if (rez.ec != std::errc())
         { // we got something which is not a number
