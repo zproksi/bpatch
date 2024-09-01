@@ -35,12 +35,12 @@ TimeMeasurer::TIME_POINT_TYPE TimeMeasurer::ExecutionTimePoint() const
 std::string TimeMeasurer::FormatNanoseconds(const long long nanoseconds)
 {
     std::string s;
-    s.reserve(32); // max length of long long in string representation in is 21
+    s.reserve(32); // max length of long long in string representation is 21
     s = std::to_string(nanoseconds);
-    const size_t len = s.size();
+    const size_t len = s.length();
     for (size_t i = 0; len > 3 && i < (len - 1) / 3; ++i)
     {
-        s.insert(len - ((i + 1) * 3), 1, ',');
+        s.insert(len - ((i + 1) * 3), 1, ','); // separate number of nanoseconds with ',' at every 3-d position
     }
     return s;
 }
