@@ -98,7 +98,7 @@ namespace wildcharacters
         initialExtraction(src_, srcFolder_, srcMask_);
 
         // check if the destination is only folder name
-        if (!dst_.empty())
+        if (dst_.size() > 0)
         {
             std::filesystem::directory_entry dirCheck(dst_);
             std::error_code ec;
