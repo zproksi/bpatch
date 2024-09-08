@@ -254,7 +254,8 @@ stateDiagram-v2
 ```mermaid
 classDiagram
     class ActionsCollection {
-        void DoReadReplaceWrite(Reader* const pReader, Writer* const pWriter)
+        void DoReplacements(const char toProcess, const bool aEod)
+        void SetNextReplacer(std::unique_ptr~StreamReplacer~&& pNext)
     }
 
     note for ActionsCollection "Description:
@@ -262,16 +263,15 @@ classDiagram
             - set of pairs: source lexeme + result lexeme
 
          2. ActionsCollection is StreamReplacer
-         It holds a chain with StreamReplacers. Last StreamReplacer has a reference
-         to the ActionsCollection
+         It holds a chain with StreamReplacers. Last StreamReplacer must has a reference
+         to the Writer or to the next StreamReplacer
 
-         3. ActionsCollection receives a Reader and a Writer as parameters,
-         reads data from the Reader, sends it to the chain, last StreamReplacer
-         from the chain transfers the result data to the ActionsCollection,
-         which uses the Writer to save the result
+         3. ActionsCollection receives an instance of Writer through SetNextReplacer method.
+         After that it can be used to process any sequence of characters. To complete processing
+         the second parameter must be set to the true value while first parameter does not matter
 
-         4. ActionsCollection can be reused to transform any amount of 
-         byte sequences"
+         4. ActionsCollection can be reused to transform any amount of byte sequences since it is
+         possible to setup other Last SreamReplacer instance via SetNextReplacer method"
 
     TJsonCallBack "returns" .. AbstractBinaryLexeme
     ActionsCollection *-- Dictionary
@@ -283,19 +283,20 @@ classDiagram
         class AbstractBinaryLexeme
     }
 
-    StreamReplacer <|-- ActionsCollection
-    StreamReplacer "data flow" o--  ActionsCollection
-
     class Reader {
         <<Interface>>
     }
     class Writer {
         <<Interface>>
     }
+    class SetNextReplacer {
+        <<method>>
+    }
     TJsonCallBack <|-- ActionsCollection
 
-    Reader --o ActionsCollection
-    Writer --o ActionsCollection
+    SetNextReplacer ..> ActionsCollection : Setup replacer\n with Writer
+    Writer --o StreamReplacer
+    Reader ..> ActionsCollection : Sends characters into\n DoReplacements method
 
     ActionsCollection *-- `StreamReplacer Instance 1`
     `StreamReplacer Instance 1` *-- "..." `etc... chain of StreamReplacer`
@@ -303,6 +304,7 @@ classDiagram
 
     style Reader fill:#AAffAA,stroke:#000000
     style Writer fill:#ffffAA,stroke:#000000
+    style SetNextReplacer fill:#ffffAA,stroke:#000000
 ```
 
 
