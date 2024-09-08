@@ -286,21 +286,28 @@ classDiagram
     class Reader {
         <<Interface>>
     }
-    class Writer {
-        <<Interface>>
-    }
     class SetNextReplacer {
         <<method>>
+    }
+    class Writer {
+        <<Interface>>
     }
     TJsonCallBack <|-- ActionsCollection
 
     SetNextReplacer ..> ActionsCollection : Setup replacer\n with Writer
-    Writer --o StreamReplacer
     Reader ..> ActionsCollection : Sends characters into\n DoReplacements method
 
     ActionsCollection *-- `StreamReplacer Instance 1`
     `StreamReplacer Instance 1` *-- "..." `etc... chain of StreamReplacer`
     `etc... chain of StreamReplacer` *-- StreamReplacer
+
+    namespace StreamReplaicersChain {
+        class Writer
+        class `StreamReplacer Instance 1`
+        class `etc... chain of StreamReplacer`
+        class StreamReplacer
+    }
+    Writer --o StreamReplacer
 
     style Reader fill:#AAffAA,stroke:#000000
     style Writer fill:#ffffAA,stroke:#000000
