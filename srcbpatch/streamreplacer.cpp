@@ -14,7 +14,7 @@ using namespace std;
 class WriterReplacer final : public StreamReplacer
 {
 public:
-    WriterReplacer(Writer* const pWriter) : pWriter_(pWriter) {};
+    WriterReplacer(Writer* const pWriter): pWriter_(pWriter) {};
 
     virtual void DoReplacements(const char toProcess, const bool aEod) const override;
     virtual void SetNextReplacer(std::unique_ptr<StreamReplacer>&& pNext) override;

@@ -577,25 +577,6 @@ namespace
     };
 
 
-    // for emulate Reader
-    class TestReader final : public Reader
-    {
-        const string_view& testData_;
-    public:
-        TestReader(string_view& atestData): testData_(atestData)
-        {}
-
-        virtual std::span<char> ReadData(const std::span<char>) override
-        {
-            return std::span<char>(const_cast<char*>(testData_.data()), testData_.size());
-        }
-
-        virtual bool FileReaded() const noexcept override { return true; };
-
-        virtual size_t Readed() const noexcept override { return testData_.size(); };
-    };
-
-
     struct TestData
     {
         string_view jsonData;
@@ -762,7 +743,6 @@ TEST(ACollection, ActionsProcessing)
         using namespace bpatch;
         ActionsCollection ac(move(vec)); // processor
         TestWriter tw; // here we accumulating data
-        TestReader tr(tst.testData);
 
         ac.SetNextReplacer(StreamReplacer::ReplacerLastInChain(&tw)); // set write point
 
@@ -858,7 +838,6 @@ TEST(ACollection, LexemeOf1Test)
         using namespace bpatch;
         ActionsCollection ac(move(vec)); // processor
         TestWriter tw; // here we accumulating data
-        TestReader tr(tst.testData);
 
         ac.SetNextReplacer(StreamReplacer::ReplacerLastInChain(&tw)); // set write point
 
@@ -923,7 +902,6 @@ TEST(ACollection, ReusageOfActionsCollection)
     for (auto& tst : arrTests)
     {
         TestWriter tw;
-        TestReader tr(tst.testData);
 
         ac.SetNextReplacer(StreamReplacer::ReplacerLastInChain(&tw));
         std::ranges::for_each(tst.testData, [&ac](const char c) {ac.DoReplacements(c, false); });
@@ -1185,7 +1163,6 @@ TEST(ACollection, MultipleUsageOfProcessing)
         using namespace bpatch;
         ActionsCollection ac(move(vec)); // processor
         TestWriter tw; // here we accumulating data
-        TestReader tr(tst.testData);
 
         ac.SetNextReplacer(StreamReplacer::ReplacerLastInChain(&tw)); // set write point
 

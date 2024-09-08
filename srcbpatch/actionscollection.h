@@ -1,6 +1,5 @@
 #pragma once
 // #include "actionscollection.h"
-#include <functional>
 #include <list>
 #include <memory>
 #include <string_view>
@@ -141,11 +140,6 @@ protected:
     ///   holds specific StreamReplacer which allows to change last Replacer in chain
     /// </summary>
     std::unique_ptr<StreamReplacer>* replacersLast_ = nullptr;
-
-    /// <summary>
-    ///  holds cached data during reading from Reader interface
-    /// </summary>
-    std::vector<char> readdata_;
 
 private:
     // all replaces, will be cleared after initialization; need temporary object for loading/initialization only

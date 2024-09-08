@@ -450,7 +450,6 @@ void ActionsCollection::ProcessComposites()
 }
 
 
-//--------------------------------------------------
 void ActionsCollection::CreateChainOfReplacers()
 {
     if (replaces_.empty())
