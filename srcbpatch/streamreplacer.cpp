@@ -8,6 +8,39 @@ namespace bpatch
 using namespace std;
 
 //--------------------------------------------------
+/// <summary>
+///   Replacer to last in chain. All incoming data should be trasferred to a Writer interface
+/// </summary>
+class WriterReplacer final : public StreamReplacer
+{
+public:
+    WriterReplacer(Writer* const pWriter) : pWriter_(pWriter) {};
+
+    virtual void DoReplacements(const char toProcess, const bool aEod) const override;
+    virtual void SetNextReplacer(std::unique_ptr<StreamReplacer>&& pNext) override;
+protected:
+    Writer* const pWriter_;
+};
+
+
+void WriterReplacer::DoReplacements(const char toProcess, const bool aEod) const
+{
+    pWriter_->WriteCharacter(toProcess, aEod);
+}
+
+
+void WriterReplacer::SetNextReplacer(std::unique_ptr<StreamReplacer>&&)
+{
+    throw logic_error("Writer Replacer should be unchangeable. Contact with maintainer.");
+}
+
+
+unique_ptr<StreamReplacer> StreamReplacer::ReplacerLastInChain(Writer* const pWriter)
+{
+    return unique_ptr<StreamReplacer>(new WriterReplacer(pWriter));
+}
+
+//--------------------------------------------------
 
 /// <summary>
 ///     common part for set next replacer
@@ -19,16 +52,9 @@ protected:
     std::unique_ptr<StreamReplacer> pNext_;
 
 public:
-    void SetLastReplacer(std::unique_ptr<StreamReplacer>&& pNext) override
+    void SetNextReplacer(std::unique_ptr<StreamReplacer>&& pNext) override
     {
-        if (pNext_)
-        {
-            pNext_->SetLastReplacer(std::move(pNext));
-        }
-        else
-        {
-            pNext_ = std::move(pNext);
-        }
+        std::swap(pNext_, pNext);
     }
 
 };

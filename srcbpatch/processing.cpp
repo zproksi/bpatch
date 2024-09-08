@@ -51,6 +51,35 @@ unique_ptr<ActionsCollection> CreateActionsFile(string_view actionsFileName)
 
 
 /// <summary>
+/// Setup processing chain for ActionsCollection with Writer
+///   Using Reader to read data and send data to Actions collection
+/// </summary>
+/// <param name="todo">Processing engine - actions collections</param>
+/// <param name="pReader">reading of data from file</param>
+/// <param name="pWriter">writing data to file</param>
+void DoReadReplaceWrite(unique_ptr<ActionsCollection>& todo, Reader* const pReader, Writer* const pWriter)
+{
+    using namespace std;
+    // setup chain to write the data
+    todo->SetNextReplacer(StreamReplacer::ReplacerLastInChain(pWriter));
+
+    // hold vector where we are reading data.
+    // no new allocations
+    vector<char> adata(static_cast<vector<char>::size_type>(SZBUFF_FC));
+    const span dataHolder(adata.data(), SZBUFF_FC);
+
+    do
+    {
+        auto fullSpan = pReader->ReadData(dataHolder);
+
+        ranges::for_each(fullSpan, [&todo](const char c) {todo->DoReplacements(c, false); });
+
+    } while (!pReader->FileReaded());
+    todo->DoReplacements('e', true); // only 'true' as sign of data end is important here
+}
+
+
+/// <summary>
 ///   Deside if the file will be processed inplace or as source + target
 /// Creates Reader and Writer. And proceed futher to DoReadReplaceWrite
 /// </summary>
@@ -67,7 +96,7 @@ bool ProcessTheFile(FileProcessingInfo& jobInfo)
     {
         {
             ReadWriteFileProcessing rwProcessing(jobInfo.src.c_str());
-            jobInfo.todo->DoReadReplaceWrite(&rwProcessing, &rwProcessing);
+            DoReadReplaceWrite(jobInfo.todo, &rwProcessing, &rwProcessing);
             jobInfo.written = rwProcessing.Written();
             jobInfo.readed = rwProcessing.Readed();
         } // close file
@@ -97,7 +126,7 @@ bool ProcessTheFile(FileProcessingInfo& jobInfo)
     ReadFileProcessing reader(jobInfo.src.c_str());
     WriteFileProcessing writer(jobInfo.dst.c_str());
 
-    jobInfo.todo->DoReadReplaceWrite(&reader, &writer);
+    DoReadReplaceWrite(jobInfo.todo, &reader, &writer);
     // we do not resize file here because we have opened/created file only for writing
     jobInfo.written = writer.Written();
     jobInfo.readed = reader.Readed();

@@ -1,8 +1,9 @@
 #pragma once
 // #include "actionscollection.h"
-#include <string_view>
+#include <functional>
 #include <list>
 #include <memory>
+#include <string_view>
 #include <vector>
 
 #include "dictionary.h"
@@ -10,9 +11,6 @@
 
 namespace bpatch
 {
-    class Reader;
-    class Writer;
-
 /// <summary>
 ///    class contains main entry points for processing.
 ///    * JSON parser callback to load settings for processing
@@ -55,15 +53,6 @@ public:
     void OnJsonArrayParsed(TJSONObject* const pJson) override;
 
     /// <summary>
-    ///   Do the data processing: read the source file,
-    /// pass the data to the replaicers chain, and pass result stream to the Writer
-    /// </summary>
-    /// <param name="pReader">where to pick the data</param>
-    /// <param name="pWriter">where to write the result data</param>
-    void DoReadReplaceWrite(Reader* const pReader, Writer* const pWriter);
-
-protected: // these two methods become protected
-    /// <summary>
     ///   callback from StreamReplacer
     /// </summary>
     /// <param name="toProcess">this char is under processing right now</param>
@@ -74,11 +63,7 @@ protected: // these two methods become protected
     ///   Set next replacer in chain of replacers
     /// </summary>
     /// <param name="pNext">replacer to call next</param>
-    virtual void SetLastReplacer(std::unique_ptr<StreamReplacer>&& pNext) override;
-
-    /// class which will use ActionsCollection as last
-    /// in replacers chain - for usage of the Writer interface
-    friend class LastReplacer;
+    virtual void SetNextReplacer(std::unique_ptr<StreamReplacer>&& pNext) override;
 
 protected:
     /// <summary>
@@ -153,9 +138,9 @@ protected:
     std::unique_ptr<StreamReplacer> replacersChain_;
 
     /// <summary>
-    ///  holds Writer call back for the data processing
+    ///   holds specific StreamReplacer which allows to change last Replacer in chain
     /// </summary>
-    Writer* pWriter_;
+    std::unique_ptr<StreamReplacer>* replacersLast_ = nullptr;
 
     /// <summary>
     ///  holds cached data during reading from Reader interface

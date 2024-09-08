@@ -138,9 +138,9 @@ bool IsReplaceObject(TJSONObject* const pJson)
 }; // nameless namespace
 
 
+//--------------------------------------------------
 ActionsCollection::ActionsCollection(std::vector<char>&& dataSource)
     : jsondata_(std::move(dataSource))
-    , readdata_(static_cast<std::vector<char>::size_type>(SZBUFF_FC))
 {
     std::string_view srcView(jsondata_.data(), jsondata_.size());
 
@@ -275,33 +275,37 @@ void ActionsCollection::OnJsonArrayParsed(TJSONObject* const pJson)
 
 void ActionsCollection::DoReplacements(const char toProcess, const bool aEod) const
 {
-    // writing bytes - ActionsCollection is last in the replacers chain
-    pWriter_->WriteCharacter(toProcess, aEod);
+    // pass the data through inner chain of the replacers
+    replacersChain_->DoReplacements(toProcess, aEod);
 }
 
 
-void ActionsCollection::SetLastReplacer(std::unique_ptr<StreamReplacer>&&)
+//--------------------------------------------------
+/// <summary>
+///    stream for bytes to replace
+/// </summary>
+struct StreamReplacerRouter final : public StreamReplacer
 {
-    throw std::logic_error("Writer Replacer should be unchangeable. Contact with maintainer.");
-}
+    std::unique_ptr<StreamReplacer> pToChange_; // to pick address of this pointer
 
-
-void ActionsCollection::DoReadReplaceWrite(Reader* const pReader, Writer* const pWriter)
-{
-    pWriter_ = pWriter; // set pWriter for output - class being setup as last in the chain
-    using namespace std;
-    do
+    virtual void DoReplacements(const char toProcess, const bool aEod) const override
     {
-        auto fullSpan = pReader->ReadData(span{readdata_.data(), SZBUFF_FC}); // read data
-        ranges::for_each(fullSpan,
-            [this](const char c)
-            {
-                replacersChain_->DoReplacements(c, false); // process data
-            }
-        );
+        pToChange_->DoReplacements(toProcess, aEod);
+    }
+    virtual void SetNextReplacer(std::unique_ptr<StreamReplacer>&& pNext) override
+    {
+        std::swap(pToChange_, pNext);
+    }
+};
+//
+//--------------------------------------------------
 
-    } while (!pReader->FileReaded());
-    replacersChain_->DoReplacements('e', true); // only 'true' as sign of data end is important here
+
+
+void ActionsCollection::SetNextReplacer(std::unique_ptr<StreamReplacer>&& pNext)
+{
+    // inside the last replacer
+    std::swap(*replacersLast_, pNext);
 }
 
 
@@ -445,33 +449,8 @@ void ActionsCollection::ProcessComposites()
     composites_.clear();
 }
 
+
 //--------------------------------------------------
-/// <summary>
-///   Replacer to be the last in the chain
-/// All incoming data should be trasferred to the ActionsCollection class
-/// ActionsCollection class will transfer the data to the Writer interface
-/// </summary>
-class LastReplacer final : public StreamReplacer
-{
-    ActionsCollection* const pac_;
-public:
-    LastReplacer(ActionsCollection* const pac): pac_(pac)
-    {
-    }
-
-    virtual void DoReplacements(const char toProcess, const bool aEod) const override
-    {
-        pac_->DoReplacements(toProcess, aEod);
-    }
-
-    virtual void SetLastReplacer(std::unique_ptr<StreamReplacer>&& pNext) override
-    {
-        pac_->SetLastReplacer(std::move(pNext));
-    }
-};
-//--------------------------------------------------
-
-
 void ActionsCollection::CreateChainOfReplacers()
 {
     if (replaces_.empty())
@@ -479,9 +458,10 @@ void ActionsCollection::CreateChainOfReplacers()
         ReportError("Nothing to replace in todo array of Actions file");
     }
 
-    // setup LastReplacer in the end of the replacers chain at once
-    // `this` passed inside as a copy. ActionsCollection owns whole replacers chain
-    replacersChain_.reset(new LastReplacer(this));
+    std::unique_ptr<StreamReplacerRouter> lastInstanceOfReplacers(new StreamReplacerRouter);
+    replacersLast_ = &lastInstanceOfReplacers.get()->pToChange_;
+
+    replacersChain_.reset(lastInstanceOfReplacers.release());
 
     for (auto rit = replaces_.crbegin(); rit != replaces_.crend(); ++rit) // from the end
     {
@@ -516,7 +496,7 @@ void ActionsCollection::CreateChainOfReplacers()
         std::unique_ptr<StreamReplacer> replacer = StreamReplacer::CreateReplacer(sourceTargetPairs);
         // `replacer` needs to hold tail of the chain
         // replacersChain_ contains the tail of chain
-        replacer->SetLastReplacer(std::move(replacersChain_)); // now full chain is in replacer
+        replacer->SetNextReplacer(std::move(replacersChain_)); // now full chain is in replacer
         replacersChain_ = std::move(replacer); // now full chain is in place
     } // for(auto rit = replaces_.rbegin(); rit != replaces_.rend(); ++rit)
 

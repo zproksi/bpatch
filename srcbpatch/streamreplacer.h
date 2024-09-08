@@ -40,10 +40,10 @@ struct StreamReplacer
 
 
     /// <summary>
-    ///   Set last replacer in chain of replacers. (Add it as the last in the chain, actually)
+    ///   Set next replacer in chain of replacers.
     /// </summary>
     /// <param name="pNext">replacer to call next</param>
-    virtual void SetLastReplacer(std::unique_ptr<StreamReplacer>&& pNext) = 0;
+    virtual void SetNextReplacer(std::unique_ptr<StreamReplacer>&& pNext) = 0;
 
 
     virtual ~StreamReplacer() = default;
@@ -51,6 +51,15 @@ struct StreamReplacer
 
 // how to create Stream Replacers
 public:
+
+/// <summary>
+///    creates a StreamReplacer for writing the lexemes to file
+/// Adding another StreamReplacer after adding this one leads to exception
+/// </summary>
+/// <param name="pWriter">writer interface</param>
+/// <returns>unique_ptr with object which should be last in chain of processing</returns>
+static std::unique_ptr<StreamReplacer> ReplacerLastInChain(Writer* const pWriter);
+
 
 /// <summary>
 ///  creates replacer for choose specific lexeme among others to replace

@@ -764,12 +764,16 @@ TEST(ACollection, ActionsProcessing)
         TestWriter tw; // here we accumulating data
         TestReader tr(tst.testData);
 
-        ac.DoReadReplaceWrite(&tr, &tw);
+        ac.SetNextReplacer(StreamReplacer::ReplacerLastInChain(&tw)); // set write point
+
+        std::ranges::for_each(tst.testData, [&ac](const char c) {ac.DoReplacements(c, false); });
+        ac.DoReplacements('a', true);
 
         EXPECT_TRUE(std::ranges::equal(tw.data_accumulator, tst.resultData));
 
         tw.data_accumulator.clear(); // clear & crecheck
-        ac.DoReadReplaceWrite(&tr, &tw);
+        std::ranges::for_each(tst.testData, [&ac](const char c) {ac.DoReplacements(c, false); });
+        ac.DoReplacements('b', true);
 
         EXPECT_TRUE(std::ranges::equal(tw.data_accumulator, tst.resultData));
     }
@@ -856,12 +860,17 @@ TEST(ACollection, LexemeOf1Test)
         TestWriter tw; // here we accumulating data
         TestReader tr(tst.testData);
 
-        ac.DoReadReplaceWrite(&tr, &tw);
+        ac.SetNextReplacer(StreamReplacer::ReplacerLastInChain(&tw)); // set write point
+
+        std::ranges::for_each(tst.testData, [&ac](const char c) {ac.DoReplacements(c, false); });
+        ac.DoReplacements('a', true);
 
         EXPECT_TRUE(std::ranges::equal(tw.data_accumulator, tst.resultData));
 
         tw.data_accumulator.clear(); // clear & crecheck
-        ac.DoReadReplaceWrite(&tr, &tw);
+
+        std::ranges::for_each(tst.testData, [&ac](const char c) {ac.DoReplacements(c, false); });
+        ac.DoReplacements('b', true);
 
         EXPECT_TRUE(std::ranges::equal(tw.data_accumulator, tst.resultData));
     }
@@ -916,7 +925,10 @@ TEST(ACollection, ReusageOfActionsCollection)
         TestWriter tw;
         TestReader tr(tst.testData);
 
-        ac.DoReadReplaceWrite(&tr, &tw);
+        ac.SetNextReplacer(StreamReplacer::ReplacerLastInChain(&tw));
+        std::ranges::for_each(tst.testData, [&ac](const char c) {ac.DoReplacements(c, false); });
+        ac.DoReplacements('b', true);
+
         EXPECT_TRUE(ranges::equal(tw.data_accumulator, tst.resultData));
     }
 }
@@ -1175,12 +1187,16 @@ TEST(ACollection, MultipleUsageOfProcessing)
         TestWriter tw; // here we accumulating data
         TestReader tr(tst.testData);
 
-        ac.DoReadReplaceWrite(&tr, &tw);
+        ac.SetNextReplacer(StreamReplacer::ReplacerLastInChain(&tw)); // set write point
+
+        std::ranges::for_each(tst.testData, [&ac](const char c) {ac.DoReplacements(c, false); });
+        ac.DoReplacements('c', true);
 
         EXPECT_TRUE(std::ranges::equal(tw.data_accumulator, tst.resultData));
 
         tw.data_accumulator.clear(); // clear & crecheck
-        ac.DoReadReplaceWrite(&tr, &tw);
+        std::ranges::for_each(tst.testData, [&ac](const char c) {ac.DoReplacements(c, false); });
+        ac.DoReplacements('d', true);
 
         EXPECT_TRUE(std::ranges::equal(tw.data_accumulator, tst.resultData));
     }

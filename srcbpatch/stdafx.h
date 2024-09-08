@@ -10,6 +10,7 @@
 #include <exception>
 #include <filesystem>
 #include <future>
+#include <functional>
 #include <iostream>
 #include <iterator>
 #include <limits>
