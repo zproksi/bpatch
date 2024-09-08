@@ -266,12 +266,14 @@ classDiagram
          It holds a chain with StreamReplacers. Last StreamReplacer must has a reference
          to the Writer or to the next StreamReplacer
 
-         3. ActionsCollection receives an instance of Writer through SetNextReplacer method.
+         3. ActionsCollection receives an instance of Writer through the SetNextReplacer method.
          After that it can be used to process any sequence of characters. To complete processing
-         the second parameter must be set to the true value while first parameter does not matter
+         the second parameter of the DoReplacements method must be set to the true value while
+         first parameter does not matter
 
-         4. ActionsCollection can be reused to transform any amount of byte sequences since it is
-         possible to setup other Last SreamReplacer instance via SetNextReplacer method"
+         4. ActionsCollection can be reused to transform any amount of byte sequences. Also, it is
+         possible to setup other last SreamReplacer instance via SetNextReplacer method to define
+         another data destination"
 
     TJsonCallBack "returns" .. AbstractBinaryLexeme
     ActionsCollection *-- Dictionary
