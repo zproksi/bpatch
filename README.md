@@ -253,45 +253,67 @@ stateDiagram-v2
 
 ```mermaid
 classDiagram
-    class StreamReplacer {
-    StreamReplacer : virtual void DoReplacements(const char toProcess, const bool aEod) const = 0*
-    StreamReplacer : virtual void SetLastReplacer(unique_ptr~StreamReplacer~&& pNext) = 0*
-    StreamReplacer : static unique_ptr~StreamReplacer~ ReplacerLastInChain(Writer* const pWriter)
-    StreamReplacer : static unique_ptr~StreamReplacer~ CreateReplacer(StreamReplacerChoice& choice)
+    class ActionsCollection {
+        void DoReplacements(const char toProcess, const bool aEod)
+        void SetNextReplacer(std::unique_ptr~StreamReplacer~&& pNext)
     }
 
-    class TJsonCallBack
-    class ActionsCollection
     note for ActionsCollection "Description:
          1. ActionsCollection is TJsonCallBack for creation of the Dictionary
             - set of pairs: source lexeme + result lexeme
 
          2. ActionsCollection is StreamReplacer
-         Reader sends bytes to ActionsCollection. bytes are traveling through
-         Stream Replacers chain. Any source lexeme will be repleced with
-         result lexeme.
+         It holds a chain with StreamReplacers. Last StreamReplacer must has a reference
+         to the Writer or to the next StreamReplacer
 
-         3. Last Stream Replacer in the chain aggregates the Writer interface
+         3. ActionsCollection receives an instance of Writer through the SetNextReplacer method.
+         After that it can be used to process any sequence of characters. To complete processing
+         the second parameter of the DoReplacements method must be set to the true value while
+         first parameter does not matter
 
-         4. ActionsCollection can be reused to transform any amount of 
-         byte sequences"
+         4. ActionsCollection can be reused to transform any amount of byte sequences. Also, it is
+         possible to setup other last SreamReplacer instance via SetNextReplacer method to define
+         another data destination"
+
     TJsonCallBack "returns" .. AbstractBinaryLexeme
     ActionsCollection *-- Dictionary
     Dictionary *-- AbstractBinaryLexeme
 
-    class Reader
-    class Writer
-    TJsonCallBack --|> ActionsCollection
-    StreamReplacer --|> ActionsCollection
-    Reader <|--|> StreamReplacer
-    ActionsCollection *-- StreamReplacerInstance1
-    StreamReplacerInstance1 *-- "..." `etc... chain of replacers`
-    `etc... chain of replacers` o-- Writer
+    namespace ReadingOfReplaceRules {
+        class TJsonCallBack
+        class Dictionary
+        class AbstractBinaryLexeme
+    }
+
+    class Reader {
+        <<Interface>>
+    }
+    class SetNextReplacer {
+        <<method>>
+    }
+    class Writer {
+        <<Interface>>
+    }
+    TJsonCallBack <|-- ActionsCollection
+
+    SetNextReplacer ..> ActionsCollection : Setup replacer\n with Writer
+    Reader ..> ActionsCollection : Sends characters into\n DoReplacements method
+
+    ActionsCollection *-- `StreamReplacer Instance 1`
+    `StreamReplacer Instance 1` *-- "..." `etc... chain of StreamReplacer`
+    `etc... chain of StreamReplacer` *-- StreamReplacer
+
+    namespace StreamReplaicersChain {
+        class Writer
+        class `StreamReplacer Instance 1`
+        class `etc... chain of StreamReplacer`
+        class StreamReplacer
+    }
+    Writer --o StreamReplacer
 
     style Reader fill:#AAffAA,stroke:#000000
-    note for Writer "Last StreamReplacer Instance"
     style Writer fill:#ffffAA,stroke:#000000
-    note for Reader "Produces data for\nthe chain of replacers"
+    style SetNextReplacer fill:#ffffAA,stroke:#000000
 ```
 
 

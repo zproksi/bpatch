@@ -551,15 +551,15 @@ TEST(ACollection, ActionsProcessingInvalid)
 }
 
 
-namespace // for emulate writer
+namespace
 {
     using namespace bpatch;
     using namespace std;
-    class TestWriter : public Writer
+    // for emulate Writer
+    class TestWriter final : public Writer
     {
     public:
         vector<char> data_accumulator;
-
 
         virtual size_t WriteCharacter(const char toProcess, const bool aEod) override
         {
@@ -570,18 +570,18 @@ namespace // for emulate writer
             return aEod ? 0 : 1;
         };
 
-
         virtual size_t Written() const noexcept override
         {
             return data_accumulator.size();
         }
     };
 
+
     struct TestData
     {
-        std::string_view jsonData;
-        std::string_view testData;
-        std::string_view resultData;
+        string_view jsonData;
+        string_view testData;
+        string_view resultData;
     };
 
 }; // namespace
@@ -743,8 +743,8 @@ TEST(ACollection, ActionsProcessing)
         using namespace bpatch;
         ActionsCollection ac(move(vec)); // processor
         TestWriter tw; // here we accumulating data
-        ac.SetLastReplacer(StreamReplacer::ReplacerLastInChain(&tw)); // set write point
 
+        ac.SetNextReplacer(StreamReplacer::ReplacerLastInChain(&tw)); // set write point
 
         std::ranges::for_each(tst.testData, [&ac](const char c) {ac.DoReplacements(c, false); });
         ac.DoReplacements('a', true);
@@ -838,8 +838,8 @@ TEST(ACollection, LexemeOf1Test)
         using namespace bpatch;
         ActionsCollection ac(move(vec)); // processor
         TestWriter tw; // here we accumulating data
-        ac.SetLastReplacer(StreamReplacer::ReplacerLastInChain(&tw)); // set write point
 
+        ac.SetNextReplacer(StreamReplacer::ReplacerLastInChain(&tw)); // set write point
 
         std::ranges::for_each(tst.testData, [&ac](const char c) {ac.DoReplacements(c, false); });
         ac.DoReplacements('a', true);
@@ -847,12 +847,70 @@ TEST(ACollection, LexemeOf1Test)
         EXPECT_TRUE(std::ranges::equal(tw.data_accumulator, tst.resultData));
 
         tw.data_accumulator.clear(); // clear & crecheck
+
         std::ranges::for_each(tst.testData, [&ac](const char c) {ac.DoReplacements(c, false); });
         ac.DoReplacements('b', true);
 
         EXPECT_TRUE(std::ranges::equal(tw.data_accumulator, tst.resultData));
     }
 }
+
+
+/// <summary>
+///    We need to prove we can reuse once created and filled ActionsCollection
+/// </summary>
+///
+TEST(ACollection, ReusageOfActionsCollection)
+{
+    using namespace std;
+    using namespace bpatch;
+
+    string_view action =
+    R"(
+        {"dictionary":
+            {"text":
+                {"a":"a", "999":"999", "hi":"hi", "21":"21"}
+            },
+         "todo":
+        [
+            {
+                "replace": {
+                    "a": "999",
+                    "999": "a"
+                }
+            },
+            {
+                "replace": {
+                    "hi": "21",
+                    "21": "hi"
+                }
+            }
+        ]}
+    )";
+
+    vector<char> vec(begin(action), end(action));
+
+    ActionsCollection ac(move(vec)); // processor
+
+    TestData arrTests[] =
+    {
+        {"", R"(a + 1 = 1000)", "999 + 1 = 1000"}, // replace something
+        {"", "+a999hi21-", "+999a21hi-"}, // replace everything
+        {"", R"(+328hj99gv1oyli54-)", R"(+328hj99gv1oyli54-)"}, // replace nothing
+        {"", R"(+hi 21-)", "+21 hi-"}, // replace something
+    };
+    for (auto& tst : arrTests)
+    {
+        TestWriter tw;
+
+        ac.SetNextReplacer(StreamReplacer::ReplacerLastInChain(&tw));
+        std::ranges::for_each(tst.testData, [&ac](const char c) {ac.DoReplacements(c, false); });
+        ac.DoReplacements('b', true);
+
+        EXPECT_TRUE(ranges::equal(tw.data_accumulator, tst.resultData));
+    }
+}
+
 
 /// <summary>
 ///    We need to prove that second usage of ActionsCollection class
@@ -1105,11 +1163,12 @@ TEST(ACollection, MultipleUsageOfProcessing)
         using namespace bpatch;
         ActionsCollection ac(move(vec)); // processor
         TestWriter tw; // here we accumulating data
-        ac.SetLastReplacer(StreamReplacer::ReplacerLastInChain(&tw)); // set write point
 
+        ac.SetNextReplacer(StreamReplacer::ReplacerLastInChain(&tw)); // set write point
 
         std::ranges::for_each(tst.testData, [&ac](const char c) {ac.DoReplacements(c, false); });
         ac.DoReplacements('c', true);
+
         EXPECT_TRUE(std::ranges::equal(tw.data_accumulator, tst.resultData));
 
         tw.data_accumulator.clear(); // clear & crecheck

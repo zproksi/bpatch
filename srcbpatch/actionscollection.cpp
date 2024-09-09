@@ -138,10 +138,11 @@ bool IsReplaceObject(TJSONObject* const pJson)
 }; // nameless namespace
 
 
+//--------------------------------------------------
 ActionsCollection::ActionsCollection(std::vector<char>&& dataSource)
-    : data_(std::move(dataSource))
+    : jsondata_(std::move(dataSource))
 {
-    std::string_view srcView(data_.data(), data_.size());
+    std::string_view srcView(jsondata_.data(), jsondata_.size());
 
     [[maybe_unused]] TJSONObject::PTR_JSON everything = TJSONObject::CreateJSONObject(srcView, this);
 
@@ -271,20 +272,42 @@ void ActionsCollection::OnJsonArrayParsed(TJSONObject* const pJson)
     }
 }
 
+
 void ActionsCollection::DoReplacements(const char toProcess, const bool aEod) const
 {
+    // pass the data through inner chain of the replacers
     replacersChain_->DoReplacements(toProcess, aEod);
 }
 
 
-void ActionsCollection::SetLastReplacer(std::unique_ptr<StreamReplacer>&& pNext)
+//--------------------------------------------------
+/// <summary>
+///    stream for bytes to replace
+/// </summary>
+struct StreamReplacerRouter final : public StreamReplacer
 {
-    if (!pNext)
+    std::unique_ptr<StreamReplacer> pToChange_; // to pick address of this pointer
+
+    virtual void DoReplacements(const char toProcess, const bool aEod) const override
     {
-        throw std::logic_error("Action Collection have not initilized properly. Contact with maintainer.");
+        pToChange_->DoReplacements(toProcess, aEod);
     }
-    replacersChain_->SetLastReplacer(std::move(pNext)); // now full chain in replacer
+    virtual void SetNextReplacer(std::unique_ptr<StreamReplacer>&& pNext) override
+    {
+        std::swap(pToChange_, pNext);
+    }
+};
+//
+//--------------------------------------------------
+
+
+
+void ActionsCollection::SetNextReplacer(std::unique_ptr<StreamReplacer>&& pNext)
+{
+    // inside the last replacer
+    std::swap(*replacersLast_, pNext);
 }
+
 
 void ActionsCollection::ReportError(const char* const message)
 {
@@ -310,7 +333,7 @@ void ActionsCollection::ReportMissedNameError(const std::string_view& aname)
 std::string_view ActionsCollection::ParseDictionaryArray(TJSONObject* const pJson, const int base, const char* const errorMsg)
 {
     // here we will hold result string view
-    // actuallly since we are working with underlying data_
+    // actuallly since we are working with underlying jsondata_
     // we will modify data of json text in this logic
     // to form necessary string view
     char* pTarget = nullptr;
@@ -427,14 +450,17 @@ void ActionsCollection::ProcessComposites()
 }
 
 
-
-
 void ActionsCollection::CreateChainOfReplacers()
 {
     if (replaces_.empty())
     {
         ReportError("Nothing to replace in todo array of Actions file");
     }
+
+    std::unique_ptr<StreamReplacerRouter> lastInstanceOfReplacers(new StreamReplacerRouter);
+    replacersLast_ = &lastInstanceOfReplacers.get()->pToChange_;
+
+    replacersChain_.reset(lastInstanceOfReplacers.release());
 
     for (auto rit = replaces_.crbegin(); rit != replaces_.crend(); ++rit) // from the end
     {
@@ -469,7 +495,7 @@ void ActionsCollection::CreateChainOfReplacers()
         std::unique_ptr<StreamReplacer> replacer = StreamReplacer::CreateReplacer(sourceTargetPairs);
         // `replacer` needs to hold tail of the chain
         // replacersChain_ contains the tail of chain
-        replacer->SetLastReplacer(std::move(replacersChain_)); // now full chain is in replacer
+        replacer->SetNextReplacer(std::move(replacersChain_)); // now full chain is in replacer
         replacersChain_ = std::move(replacer); // now full chain is in place
     } // for(auto rit = replaces_.rbegin(); rit != replaces_.rend(); ++rit)
 

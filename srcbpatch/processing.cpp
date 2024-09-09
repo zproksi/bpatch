@@ -61,7 +61,7 @@ void DoReadReplaceWrite(unique_ptr<ActionsCollection>& todo, Reader* const pRead
 {
     using namespace std;
     // setup chain to write the data
-    todo->SetLastReplacer(StreamReplacer::ReplacerLastInChain(pWriter));
+    todo->SetNextReplacer(StreamReplacer::ReplacerLastInChain(pWriter));
 
     // hold vector where we are reading data.
     // no new allocations
@@ -74,7 +74,7 @@ void DoReadReplaceWrite(unique_ptr<ActionsCollection>& todo, Reader* const pRead
 
         ranges::for_each(fullSpan, [&todo](const char c) {todo->DoReplacements(c, false); });
 
-    }while (!pReader->FileReaded());
+    } while (!pReader->FileReaded());
     todo->DoReplacements('e', true); // only 'true' as sign of data end is important here
 }
 

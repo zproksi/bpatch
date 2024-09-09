@@ -1,8 +1,8 @@
 #pragma once
 // #include "actionscollection.h"
-#include <string_view>
 #include <list>
 #include <memory>
+#include <string_view>
 #include <vector>
 
 #include "dictionary.h"
@@ -62,7 +62,7 @@ public:
     ///   Set next replacer in chain of replacers
     /// </summary>
     /// <param name="pNext">replacer to call next</param>
-    virtual void SetLastReplacer(std::unique_ptr<StreamReplacer>&& pNext) override;
+    virtual void SetNextReplacer(std::unique_ptr<StreamReplacer>&& pNext) override;
 
 protected:
     /// <summary>
@@ -116,7 +116,7 @@ protected:
 protected:
     // this is data for json parsing
     // all lexemes from json file is inside
-    std::vector<char> data_;
+    std::vector<char> jsondata_;
 
     // here we hold all lexemes from our json
     Dictionary dictionary_;
@@ -135,6 +135,11 @@ protected:
     ///  here we are holding chain of the replacers
     /// </summary>
     std::unique_ptr<StreamReplacer> replacersChain_;
+
+    /// <summary>
+    ///   holds specific StreamReplacer which allows to change last Replacer in chain
+    /// </summary>
+    std::unique_ptr<StreamReplacer>* replacersLast_ = nullptr;
 
 private:
     // all replaces, will be cleared after initialization; need temporary object for loading/initialization only
