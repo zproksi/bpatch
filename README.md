@@ -1,6 +1,9 @@
 # `bpatch`
 
+**PURPOSE:** replaces inner file data according provided rules
+
 **PURPOSE:** Suppose you need to modify a file and replace several byte sequences with other byte sequences. Furthermore, imagine you want these modification rules to be formalized in a human-readable format, so they're easy to edit. If that's the case, then this tool is exactly what you need.
+
 
 Domains where `bpatch` will be surely useful
 <ul><details><summary>Encryption</summary>
