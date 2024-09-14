@@ -565,7 +565,7 @@ void TJSONObject::OnJSONValue(std::string_view& sv, size_t& at)
         const char cNext = sv.at(at);
         if ('\"' == cNext)
         {// string value
-            if (!SetValue(std::move(GetStringValue(sv, at))))
+            if (!SetValue(GetStringValue(sv, at)))
             {
                 ReportError(sv, at, parsing_errors[ERR_JSONSTRUCTURE]);
             }
@@ -599,14 +599,14 @@ void TJSONObject::OnJSONValue(std::string_view& sv, size_t& at)
 
         if (auto [bNumber, numLength] = getJSONNumberLength(sv, at); bNumber)
         {
-            SetValue(std::move(std::string_view(sv.data() + at, numLength)));
+            SetValue(std::string_view(sv.data() + at, numLength));
             at += numLength;
             break;
         };
 
         if (auto [bTFN, tfnLength] = getJSONTrueFalseNull(sv, at); bTFN)
         {
-            SetValue(std::move(std::string_view(sv.data() + at, tfnLength)));
+            SetValue(std::string_view(sv.data() + at, tfnLength));
             at += tfnLength;
             break;
         };
@@ -679,14 +679,14 @@ void TJSONObject::OnJSONArray(std::string_view& sv, size_t& at)
 
         if (auto [bNumber, numLength] = getJSONNumberLength(sv, at); bNumber)
         {
-            SetValue(std::move(std::string_view(sv.data() + at, numLength)));
+            SetValue(std::string_view(sv.data() + at, numLength));
             at += numLength;
             return true;
         };
 
         if (auto [bTFN, tfnLength] = getJSONTrueFalseNull(sv, at); bTFN)
         {
-            SetValue(std::move(std::string_view(sv.data() + at, tfnLength)));
+            SetValue(std::string_view(sv.data() + at, tfnLength));
             at += tfnLength;
             return true;
         };

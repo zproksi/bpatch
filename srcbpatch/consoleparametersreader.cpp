@@ -121,7 +121,7 @@ bool ConsoleParametersReader::ReadConsoleParameters(int argc, char* argv[])
     std::transform(argv, argv + argc, params.begin(),
         [](const char* src) noexcept -> auto
         {
-            return std::move(std::string_view(src, strlen(src)));
+            return std::string_view(src, strlen(src));
         }
     );
 
