@@ -160,6 +160,7 @@ namespace bpatch {
     public:
         std::unordered_map<char, std::unique_ptr<TrieNode>> children;
         std::optional<std::string_view> target;
+        size_t depth = 0;
     };
 
     class Trie {
@@ -171,31 +172,32 @@ namespace bpatch {
 
         void insert(std::string_view key, std::string_view value) {
             TrieNode *node = &root;
-            for (char c: key) {
+            for (char c : key) {
                 if (!node->children[c]) {
                     node->children[c] = std::make_unique<TrieNode>();
                 }
                 node = node->children[c].get();
             }
             node->target = value;
+            node->depth = key.size();
         }
 
-        [[nodiscard]] std::pair<std::string_view, MatchType> search(const std::string_view& cachedData) {
+        [[nodiscard]] std::tuple<std::string_view, size_t, MatchType> searchFull(const std::string_view& cachedData) {
             TrieNode *node = &root;
             for (char c: cachedData) {
                 auto res = node->children.find(c);
                 if (res == node->children.end()) {
-                    return std::make_pair(std::string_view(), none);
+                    return std::make_tuple(std::string_view(), 0, none);
                 }
                 node = res->second.get();
+                // full match
+                if (node->target) {
+                    return std::make_tuple(node->target.value(), node->depth,  full);
+                }
             }
 
-            // full match
-            if (node->target) {
-                return std::make_pair(node->target.value(), full);
-            }
             // partial
-            return {std::string_view(), partial};
+            return {std::string_view(), 0, partial};
         }
 
         void Eod() {
@@ -246,171 +248,117 @@ namespace bpatch {
     ///  O - |-- ...          | - o
     ///      |--SRC N  TRG N  |
     ///
-    class ChoiceReplacer final : public ReplacerWithNext
-{
-    typedef struct
-    {
-        span<const char> src_;
-        span<const char> trg_;
-    }ChoiceReplacerPair;
+    class ChoiceReplacer final : public ReplacerWithNext {
+        typedef struct {
+            span<const char> src_;
+            span<const char> trg_;
+        } ChoiceReplacerPair;
 
-public:
-    /// <summary>
-    ///   creating ChoiceReplacer from provided pairs
-    /// </summary>
-    /// <param name="choice">vector os source & target pairs</param>
-    ChoiceReplacer(StreamReplacerChoice& choice)
-    {
-        size_t bufferSize = 0; // to allocate buffer
-        const size_t sz = choice.size();
-        rpairs_.resize(sz);
-        for (size_t i = 0; i < sz; ++i)
-        {
-            auto& vPair = choice[i]; // copy from
-            auto& rpair = rpairs_[i];// copy to
-
-            rpair.src_ = vPair.first->access();
-            const size_t sourceSize = rpair.src_.size();
-            if (bufferSize < sourceSize)
-            {
-                bufferSize = sourceSize; // calculate necessary buffer size
-            }
-
-            rpair.trg_ = vPair.second->access();
-        }
-
-        cachedData_.resize(bufferSize);
-    }
-
-    void DoReplacements(const char toProcess, const bool aEod) const override;
-
-protected:
-    /// <summary>
-    ///    check for partial or full match of the data from cachedData_
-    ///       with any of lexemes sequentially
-    ///       and provides type of the match and index if found
-    /// </summary>
-    /// <param name="indexFrom"> search in pairs from this index</param>
-    /// <param name="fullOnly"> what type of match we want to find : only full or partial also </param>
-    /// <returns>bool: partial, bool: full, size_t: index </returns>
-    tuple<bool, bool, size_t> FindMatch(const size_t indexFrom, const bool fullOnly) const
-    {
-        for (size_t i = indexFrom; i < rpairs_.size(); ++i)
-        {
-            const auto& srcSpan = rpairs_[i].src_;
-            const size_t cmpLength = (srcSpan.size() > cachedAmount_) ? cachedAmount_ : srcSpan.size();
-
-            if (0 == memcmp(srcSpan.data(), cachedData_.data(), cmpLength))
-            { // match
-                if (cmpLength == srcSpan.size())
-                {
-                    return {false, true, i};
+    public:
+        /// <summary>
+        ///   creating ChoiceReplacer from provided pairs
+        /// </summary>
+        /// <param name="choice">vector os source & target pairs</param>
+        ChoiceReplacer(StreamReplacerChoice &choice) {
+            size_t bufferSize = 0; // to allocate buffer
+            const size_t sz = choice.size();
+            for (size_t i = 0; i < sz; ++i) {
+                auto &vPair = choice[i];
+                const size_t sourceSize = vPair.first->access().size();
+                if (bufferSize < sourceSize) {
+                    bufferSize = sourceSize; // calculate necessary buffer size
                 }
-                if (!fullOnly)
+                const span<const char> &src = vPair.first->access();
+                const span<const char> &trg = vPair.second->access();
+                trie_.insert(string_view(src.data(), src.size()), string_view(trg.data(), trg.size()));
+            }
+
+            cachedData_.resize(bufferSize);
+        }
+
+        void DoReplacements(const char toProcess, const bool aEod) const override;
+
+    protected:
+        /// <summary>
+        ///   Sends target to next replacers, and resets partial match index to zero
+        /// </summary>
+        /// <param name="target">the array we need to send</param>
+        void SendAndResetPartialMatch(const span<const char> &target) const {
+            for (const char c: target) {
+                pNext_->DoReplacements(c, false);
+            }
+        }
+
+        /// <summary>
+        ///   Clean srcMatchedLength bytes of cache from the beginning
+        /// </summary>
+        /// <param name="srcMatchedLength">number of bytes we have to clear</param>
+        void CleanTheCache(size_t srcMatchedLength) const {
+            shift_left(cachedData_.data(),
+                       cachedData_.data() + cachedAmount_,
+                       static_cast<std::iterator_traits<decltype(cachedData_.data())>::difference_type>(
+                           srcMatchedLength));
+            cachedAmount_ -= srcMatchedLength;
+            trie_.Eod();
+        }
+
+        /// <summary>
+        ///   The end of the data sign has been received and the cached data need to be either send or replaced & send
+        /// </summary>
+        /// <param name="toProcess">character received along with end of data sign</param>
+        void DoReplacementsAtTheEndOfTheData(const char toProcess) const {
+            while (cachedAmount_ > 0) {
+                const auto [match, srcSize, type] = trie_.searchFull(std::string_view(cachedData_.data(), cachedAmount_));
+                if (type == Trie::full) {
+                    SendAndResetPartialMatch(match);
+                    CleanTheCache(srcSize);
+                } else // No full match -> send 1 char from cache
                 {
-                    return {true, false, i};
+                    SendAndResetPartialMatch(std::span<char>(cachedData_.data(), 1));
+                    CleanTheCache(1);
                 }
             }
-            // continue - no match here
+            pNext_->DoReplacements(toProcess, true);
         }
-        return {false, false, 0};
-    }
 
-    /// <summary>
-    ///   Sends target to next replacers, and resets partial match index to zero
-    /// </summary>
-    /// <param name="target">the array we need to send</param>
-    void SendAndResetPartialMatch(const span<const char>& target) const
-    {
-        for (const char c : target)
-        {
-            pNext_->DoReplacements(c, false);
+    protected:
+        // our pairs sorted by priority - only one of them could be replaced for concrete pos
+        mutable Trie trie_;
+
+        mutable size_t cachedAmount_ = 0; // we cached this amount of data
+
+        // this is used to hold temporary data while the logic is
+        // looking for the new beginning of the cached value
+        mutable vector<char> cachedData_;
+    };
+
+    void ChoiceReplacer::DoReplacements(const char toProcess, const bool aEod) const {
+        if (nullptr == pNext_) {
+            throw logic_error("Replacement chain has been broken. Communicate with maintainer");
         }
-        indexOfPartialMatch_ = 0;
-    }
 
-    /// <summary>
-    ///   Clean srcMatchedLength bytes of cache from the beginning
-    /// </summary>
-    /// <param name="srcMatchedLength">number of bytes we have to clear</param>
-    void CleanTheCache(size_t srcMatchedLength) const
-    {
-        shift_left(cachedData_.data(),
-            cachedData_.data() + cachedAmount_,
-            static_cast<std::iterator_traits<decltype(cachedData_.data())>::difference_type>(srcMatchedLength));
-        cachedAmount_ -= srcMatchedLength;
-    }
-
-    /// <summary>
-    ///   The end of the data sign has been received and the cached data need to be either send or replaced & send
-    /// </summary>
-    /// <param name="toProcess">character received along with end of data sign</param>
-    void DoReplacementsAtTheEndOfTheData(const char toProcess) const
-    {
-        while (cachedAmount_ > 0)
+        if (aEod) [[unlikely]]
         {
-            const auto [partialMatch, fullMatch, matchPairIndex] = FindMatch(indexOfPartialMatch_, true);
-            if (fullMatch)
-            {
-                const auto& rpair = rpairs_[matchPairIndex];
-                SendAndResetPartialMatch(rpair.trg_);
-                CleanTheCache(rpair.src_.size());
-            }
-            else // No full match -> send 1 char from cache
-            {
-                SendAndResetPartialMatch(std::span<char> (cachedData_.data(), 1));
-                CleanTheCache(1);
-            }
-        }
-        pNext_->DoReplacements(toProcess, true);
-    }
-
-protected:
-    // our pairs sorted by priority - only one of them could be replaced for concrete pos
-    vector<ChoiceReplacerPair> rpairs_;
-
-    mutable size_t cachedAmount_ = 0; // we cached this amount of data
-    mutable size_t indexOfPartialMatch_ = 0; // this index from rpairs_ represents last partial match
-
-    // this is used to hold temporary data while the logic is
-    // looking for the new beginning of the cached value
-    mutable vector<char> cachedData_;
-};
-
-void ChoiceReplacer::DoReplacements(const char toProcess, const bool aEod) const
-{
-    if (nullptr == pNext_)
-    {
-        throw logic_error("Replacement chain has been broken. Communicate with maintainer");
-    }
-
-    if (aEod) [[unlikely]]
-    {
-        DoReplacementsAtTheEndOfTheData(toProcess);
-        return;
-    }
-
-    cachedData_[cachedAmount_++] = toProcess;
-    while (cachedAmount_ > 0)
-    {
-        const auto [partialMatch, fullMatch, matchPairIndex] = FindMatch(indexOfPartialMatch_, false);
-        if (fullMatch)
-        {
-            const auto& rpair = rpairs_[matchPairIndex];
-            SendAndResetPartialMatch(rpair.trg_);
-            CleanTheCache(rpair.src_.size());
+            DoReplacementsAtTheEndOfTheData(toProcess);
             return;
         }
-        if (partialMatch)
-        {
-            indexOfPartialMatch_ = matchPairIndex;
-            return;
+
+        cachedData_[cachedAmount_++] = toProcess;
+        while (cachedAmount_ > 0) {
+            const auto [match, srcSize, type] = trie_.searchFull(std::string_view(cachedData_.data(), cachedAmount_));
+            if (type == Trie::full) {
+                SendAndResetPartialMatch(match);
+                CleanTheCache(srcSize);
+                return;
+            }
+            if (type == Trie::partial) {
+                return;
+            }
+            // No any match -> send 1 char from cache
+            SendAndResetPartialMatch(std::span<char>(cachedData_.data(), 1));
+            CleanTheCache(1);
         }
-        // No any match -> send 1 char from cache
-        SendAndResetPartialMatch(std::span<char> (cachedData_.data(), 1));
-        CleanTheCache(1);
     }
-}
 
     namespace {
         static std::string_view warningDuplicatePattern(
@@ -466,7 +414,7 @@ void ChoiceReplacer::DoReplacements(const char toProcess, const bool aEod) const
         cachedData_[cachedAmount_++] = toProcess;
         if (cachedAmount_ == cachedData_.size()) {
             string_view key(cachedData_.data(), cachedAmount_);
-            if (auto [target, type] = trie_.search(key); type == Trie::full) {
+            if (auto [target, srcSize, type] = trie_.searchFull(key); type == Trie::full) {
                 for (char c: target) {
                     pNext_->DoReplacements(c, false);
                 }
