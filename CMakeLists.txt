@@ -146,7 +146,6 @@ add_subdirectory(src${pname})
 add_subdirectory(test${pname})
 
 target_link_libraries(${pname} src${pname} ${wild_library})
-target_include_directories(${pname} PUBLIC ${robin_map_SOURCE_DIR}/include)
 
 # Console commands for building on Windows with Visual Studio
 # !!!!!!!!!!!!!
