@@ -350,7 +350,8 @@ namespace
 /// <summary>
 ///   replaces for lexemes of the same length
 /// </summary>
-class UniformLexemeReplacer final : public ReplacerWithNext {
+class UniformLexemeReplacer final : public ReplacerWithNext
+{
 public:
     UniformLexemeReplacer(StreamReplacerChoice &choice, const size_t sz)
         : cachedData_(sz) {
