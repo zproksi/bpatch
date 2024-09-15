@@ -1,7 +1,17 @@
 #pragma once
 
 #include <string_view>
+
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4324)
+#endif
+
 #include <tsl/robin_map.h>
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 class TrieNode {
     public:

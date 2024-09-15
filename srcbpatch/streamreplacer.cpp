@@ -353,11 +353,13 @@ namespace
 class UniformLexemeReplacer final : public ReplacerWithNext
 {
 public:
-    UniformLexemeReplacer(StreamReplacerChoice &choice, const size_t sz)
-        : cachedData_(sz) {
-        for (AbstractLexemesPair &alpair: choice) {
-            const span<const char> &src = alpair.first->access();
-            const span<const char> &trg = alpair.second->access();
+    UniformLexemeReplacer(StreamReplacerChoice& choice, const size_t sz)
+        : cachedData_(sz)
+    {
+        for (AbstractLexemesPair& alpair : choice)
+        {
+            const span<const char>& src = alpair.first->access();
+            const span<const char>& trg = alpair.second->access();
             trie_.insert(string_view(src.data(), src.size()), string_view(trg.data(), trg.size()));
         }
     }
@@ -397,17 +399,22 @@ void UniformLexemeReplacer::DoReplacements(const char toProcess, const bool aEod
 
     // set buffer of cached at once
     cachedData_[cachedAmount_++] = toProcess;
-    if (cachedAmount_ == cachedData_.size()) {
+    if (cachedAmount_ == cachedData_.size())
+    {
         string_view key(cachedData_.data(), cachedAmount_);
-        if (auto [target, fullMatch] = trie_.searchFullMatch(key); fullMatch) {
-            for (char c: target) {
-                pNext_->DoReplacements(c, false);
+        if (auto [target, fullMatch] = trie_.searchFullMatch(key); fullMatch)
+        {
+            for (char q: target)
+            {
+                pNext_->DoReplacements(q, false);
             }
             cachedAmount_ = 0;
-        } else {
+        }
+        else
+        {
+            // not found
             pNext_->DoReplacements(cachedData_[0], false);
-            std::shift_left(cachedData_.begin(), cachedData_.begin() + cachedAmount_, 1);
-            --cachedAmount_;
+            std::shift_left(cachedData_.begin(), cachedData_.begin() + cachedAmount_--, 1);
         }
     }
 }
