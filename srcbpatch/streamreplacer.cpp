@@ -158,8 +158,8 @@ namespace bpatch {
 
     class TrieNode {
     public:
-        tsl::robin_map<char, std::unique_ptr<TrieNode> > children;
-        std::string_view target;
+        std::unordered_map<char, std::unique_ptr<TrieNode>> children;
+        std::optional<std::string_view> target;
     };
 
     class Trie {
@@ -180,21 +180,62 @@ namespace bpatch {
             node->target = value;
         }
 
-        [[nodiscard]] std::pair<std::string_view, MatchType> search(const std::string_view &key) {
+        [[nodiscard]] std::pair<std::string_view, MatchType> search(const std::string_view& cachedData) {
+            TrieNode *node = &root;
+            for (char c: cachedData) {
+                auto res = node->children.find(c);
+                if (res == node->children.end()) {
+                    return std::make_pair(std::string_view(), none);
+                }
+                node = res->second.get();
+            }
+
+            // full match
+            if (node->target) {
+                return std::make_pair(node->target.value(), full);
+            }
+            // partial
+            return {std::string_view(), partial};
+        }
+
+        void Eod() {
+            lastNode = &root;
+        }
+
+        [[nodiscard]] std::pair<std::string_view, MatchType> accumulateSearch(const char key) {
+            TrieNode *node = lastNode;
+            auto res = node->children.find(key);
+            if (res == node->children.end()) {
+                lastNode = &root;
+                return std::make_pair(std::string_view(), none);
+            }
+            node = res->second.get();
+            // full match
+            if (node->target) {
+                return std::make_pair(node->target.value(), full);
+            }
+            // partial
+            lastNode = node;
+            return {std::string_view(), partial};
+        }
+
+        [[nodiscard]] std::pair<std::string_view, MatchType> accumulateSearch(const std::string_view &key) {
             TrieNode *node = lastNode;
             for (char c: key) {
                 auto res = node->children.find(c);
                 if (res == node->children.end()) {
-                    if (node == &root) {
-                        lastNode = &root;
-                        return std::make_pair(std::string_view(), none);
-                    }
-                    lastNode = node;
-                    return {"", partial};
+                    lastNode = &root;
+                    return std::make_pair(std::string_view(), none);
                 }
                 node = res->second.get();
             }
-            return {node->target, full};
+            // full match
+            if (node->target) {
+                return std::make_pair(node->target.value(), full);
+            }
+            // partial
+            lastNode = node;
+            return {std::string_view(), partial};
         }
     };
 
@@ -274,6 +315,7 @@ namespace bpatch {
                     CleanTheCache(1);
                 }
             }
+            trie_.Eod();
             pNext_->DoReplacements(toProcess, true);
         }
 
