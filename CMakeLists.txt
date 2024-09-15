@@ -11,9 +11,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo;MinSizeRel" CACHE STRING "Configs" FORCE)
 
 # Set the build type to Debug if not explicitly specified
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Debug)
-endif()
+if (NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Debug)
+endif ()
 
 message(STATUS "Initial COMPILER_FLAGS:" ${CMAKE_CXX_FLAGS})
 
@@ -27,7 +27,7 @@ message(STATUS "CMAKE_CXX_FLAGS:" ${CMAKE_CXX_FLAGS})
 message(STATUS "CMAKE_CXX_COMPILER_ID:" ${CMAKE_CXX_COMPILER_ID})
 set(CMAKE_EXE_LINKER_FLAGS "")
 
-if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     # GCC (GNU Compiler)
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDEBUG -D_DEBUG -g -D_CONSOLE -Wno-unknown-pragmas -Wall -Werror -fno-rtti -pthread")
@@ -40,8 +40,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
         set(CMAKE_EXE_LINKER_FLAGS "-g -O2 -flto")
     else()
         message(FATAL_ERROR "Unsupported compilation mode")
-    endif()
-elseif(CMAKE_CXX_COMPILER_ID MATCHES ".*Clang.*")  #Clang or AppleClang or anything with Clang
+    endif ()
+elseif (CMAKE_CXX_COMPILER_ID MATCHES ".*Clang.*")  #Clang or AppleClang or anything with Clang
     # clang (MAC Compiler)
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDEBUG -D_DEBUG -g -D_CONSOLE -Wno-unknown-pragmas -Wall -Werror -Wno-unqualified-std-cast-call -fno-rtti -pthread -stdlib=libc++")
@@ -54,8 +54,8 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES ".*Clang.*")  #Clang or AppleClang or anyth
         set(CMAKE_EXE_LINKER_FLAGS "-g -O2 -flto")
     else()
         message(FATAL_ERROR "Unsupported compilation mode")
-    endif()
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    endif ()
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     # MSVC (Microsoft Visual C++)
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DWIN32 /D_WINDOWS /D_CONSOLE /DDEBUG /D_DEBUG      /Zi /EHsc /W4 /WX /GR- /MDd")
@@ -68,10 +68,10 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
         set(CMAKE_EXE_LINKER_FLAGS "/DEBUG:FULL /OPT:REF /OPT:ICF /INCREMENTAL:NO")
     else()
         message(FATAL_ERROR "Unsupported compilation mode")
-    endif()
-else()
+    endif ()
+else ()
     message(FATAL_ERROR "Unsupported compiler")
-endif()
+endif ()
 
 message(STATUS "CMAKE_CXX_FLAGS:" ${CMAKE_CXX_FLAGS})
 
@@ -84,17 +84,27 @@ FetchContent_GetProperties(googletest)
 #googletest_POPULATED
 #googletest_SOURCE_DIR
 #googletest_BUILD_DIR
-if(NOT googletest_POPULATED)
+if (NOT googletest_POPULATED)
     FetchContent_Populate(googletest)
     add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BUILD_DIR})
-endif()
+endif ()
+
+include(FetchContent)
+
+FetchContent_Declare(
+        robin_map
+        GIT_REPOSITORY https://github.com/Tessil/robin-map.git
+        GIT_TAG master
+)
+
+FetchContent_MakeAvailable(robin_map)
 
 include_directories(${wild_library})
 include_directories(src${pname})
 
 # Source files
 set(SOURCE_FILES
-    bpatch.cpp
+        bpatch.cpp
 )
 #set(HEADER_FILES
 #)
@@ -103,14 +113,14 @@ set(SOURCE_FILES
 add_executable(${pname} ${SOURCE_FILES})
 
 # Set the name of the executable based on the platform
-if(WIN32)
+if (WIN32)
     set_target_properties(${pname} PROPERTIES OUTPUT_NAME "${pname}")
-else()
+else ()
     set_target_properties(${pname} PROPERTIES OUTPUT_NAME "${pname}")
-endif()
+endif ()
 
 # Configuration-specific settings
-if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     # For GCC and Clang, use the -m64 flag to target 64-bit
 set_target_properties(${pname} PROPERTIES
     COMPILE_OPTIONS "$<$<CONFIG:Release>:-O3>"
@@ -126,16 +136,17 @@ set_target_properties(${pname} PROPERTIES
 )
 
 
-else()
+else ()
     message(FATAL_ERROR "Unsupported compiler")
 
-endif()
+endif ()
 
 add_subdirectory(${wild_library})
 add_subdirectory(src${pname})
 add_subdirectory(test${pname})
 
 target_link_libraries(${pname} src${pname} ${wild_library})
+target_include_directories(${pname} PUBLIC ${robin_map_SOURCE_DIR}/include)
 
 # Console commands for building on Windows with Visual Studio
 # !!!!!!!!!!!!!
