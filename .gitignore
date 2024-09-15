@@ -1,8 +1,10 @@
 # folders of rebuild
 buildLinuxDebug/
 buildLinuxRelease/
+buildLinuxRelWithDebInfo/
 buildWinDebug/
 buildWinRelease/
+buildWinRelWithDebInfo/
 build/
 .vscode/
 x64/
