@@ -11,7 +11,7 @@ if [ "$1" != "" ]; then
 fi
 
 # Check if MODE is not Debug, if true set it to Release
-if [ "$MODE" != "Debug" ] && [ "$MODE" != "RelWithDebInfo" ]; then
+if [ "$MODE" != "Debug" ]; then
     MODE=Release
 fi
 

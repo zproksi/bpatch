@@ -19,7 +19,7 @@ void Trie::insert(std::string_view key, std::string_view value)
         auto res = node->children.find(c);
         if (res == node->children.end())
         {
-            return std::make_tuple(std::string_view(), false);
+            return std::make_pair(std::string_view(), false);
         }
         node = res->second.get();
     }
@@ -27,8 +27,8 @@ void Trie::insert(std::string_view key, std::string_view value)
     // full match
     if (node->target)
     {
-        return std::make_tuple(node->target.value(), true);
+        return std::make_pair(node->target.value(), true);
     }
 
-    return std::make_tuple(std::string_view(), false);
+    return std::make_pair(std::string_view(), false);
 }
