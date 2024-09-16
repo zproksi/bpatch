@@ -2,15 +2,14 @@
 
 #include <string_view>
 
-#ifdef _MSC_VER
-#pragma warning(push)
+#ifdef _WIN32
+#pragma warning(disable : 4127)
 #pragma warning(disable : 4324)
 #endif
-
 #include <tsl/robin_map.h>
-
-#ifdef _MSC_VER
-#pragma warning(pop)
+#ifdef _WIN32
+#pragma warning(default : 4127)
+#pragma warning(disable : 4324)
 #endif
 
 class TrieNode {
