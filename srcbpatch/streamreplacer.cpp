@@ -401,8 +401,7 @@ void UniformLexemeReplacer::DoReplacements(const char toProcess, const bool aEod
     cachedData_[cachedAmount_++] = toProcess;
     if (cachedAmount_ == cachedData_.size())
     {
-        string_view key(cachedData_.data(), cachedAmount_);
-        if (auto [target, fullMatch] = trie_.searchFullMatch(key); fullMatch)
+        if (auto [target, fullMatch] = trie_.searchFullMatch(std::span<char> (cachedData_.data(), cachedAmount_)); fullMatch)
         {
             for (char q: target)
             {

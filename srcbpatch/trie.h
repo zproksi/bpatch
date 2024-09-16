@@ -33,7 +33,7 @@ public:
     /// </summary>
     /// <param name="cachedData"> key to find </param>
     /// <returns>string_view: target, bool: FullMatch</returns>
-    [[nodiscard]] std::pair<std::string_view, bool> searchFullMatch(const std::string_view& cachedData);
+    [[nodiscard]] std::pair<std::string_view, bool> searchFullMatch(const std::span<const char>& cachedData);
 
 private:
     TrieNode root;
