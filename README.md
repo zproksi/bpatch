@@ -498,5 +498,5 @@ Feel free to use email bpatchzaytsev@gmail.com along with the title:
 [bin4_data]:./IntegrationTests/binaries/bin4.data
 [bin5_data]:./IntegrationTests/binaries/bin5.data
 [tohex_json]:./IntegrationTests/scripts/tohex.json
-[fromhex_json]:./IntegrationTests/scripts/fromhex.json
+[fromhex_json]:./IntegrationTests/scripts/fromhex1byte.json
 [JSON]:https://www.json.org/json-en.html
