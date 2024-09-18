@@ -538,19 +538,6 @@
   },
   "todo": [
     {
-      "replace":
-      {
-"LF":"empty",
-"CR":"empty",
-"tab":"empty",
-"whitespace":"empty",
-"a":"A",
-"b":"B",
-"c":"C",
-"d":"D",
-"e":"E",
-"f":"F"
-      },
       "replace": {
 "t0":"0",
 "t1":"1",
