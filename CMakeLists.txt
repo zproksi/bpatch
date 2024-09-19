@@ -89,16 +89,6 @@ if(NOT googletest_POPULATED)
     add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BUILD_DIR})
 endif()
 
-include(FetchContent)
-
-FetchContent_Declare(
-        robin_map
-        GIT_REPOSITORY https://github.com/Tessil/robin-map.git
-        GIT_TAG master
-)
-
-FetchContent_MakeAvailable(robin_map)
-
 include_directories(${wild_library})
 include_directories(src${pname})
 

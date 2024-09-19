@@ -2,19 +2,9 @@
 
 #include <string_view>
 
-#ifdef _WIN32
-#pragma warning(disable : 4127)
-#pragma warning(disable : 4324)
-#endif
-#include <tsl/robin_map.h>
-#ifdef _WIN32
-#pragma warning(default : 4127)
-#pragma warning(disable : 4324)
-#endif
-
 class TrieNode {
     public:
-        tsl::robin_map<char, std::unique_ptr<TrieNode>> children;
+        std::unordered_map<char, std::unique_ptr<TrieNode>> children;
         std::optional<std::string_view> target;
     };
 
