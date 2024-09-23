@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string_view>
+#include <deque>
 
 /// @brief A node of prefix Trie, each node contains current target (if exist) and child nodes in children.
 /// And doesn't contain a char of current node

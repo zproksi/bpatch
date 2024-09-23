@@ -46,4 +46,3 @@ add_library(${PROJECT_NAME} ${SOURCE_FILES} ${HEADER_FILES})
 
 # Precompiled header
 target_precompile_headers(${PROJECT_NAME} PRIVATE stdafx.h)
-target_include_directories(${PROJECT_NAME} PUBLIC ${robin_map_SOURCE_DIR}/include)

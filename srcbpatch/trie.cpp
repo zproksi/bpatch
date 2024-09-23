@@ -5,11 +5,8 @@ void Trie::insert(std::string_view key, std::string_view value)
     std::reference_wrapper<TrieNode> node = root;
     for (char character : key)
     {
-        if (!node.get().children.contains(character)) [[unlikely]] {
-            nodes.emplace_back();
-            node.get().children.emplace(character, nodes.back());
-        }
-        node = node.get().children.at(character);
+        auto [it, inserted] = node.get().children.emplace(character, nodes.emplace_back());
+        node = it->second.get();
     }
     node.get().target = value;
 }
