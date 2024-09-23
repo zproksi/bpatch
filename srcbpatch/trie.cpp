@@ -11,10 +11,10 @@ void Trie::insert(std::string_view key, std::string_view value)
     node.get().target = value;
 }
 
-[[nodiscard]] std::pair<std::string_view, bool> Trie::searchFullMatch(const std::span<const char>& cachedData) const
+[[nodiscard]] std::pair<std::string_view, bool> Trie::searchFullMatch(std::span<const char> cachedData) const
 {
     std::reference_wrapper<const TrieNode> node = root;
-    for (char c: cachedData)
+    for (char c : cachedData)
     {
         auto res = node.get().children.find(c);
         if (res == node.get().children.end())
