@@ -2,22 +2,25 @@
 
 void Trie::insert(std::string_view key, std::string_view value)
 {
-    TrieNode* node = &root;
+    std::reference_wrapper<TrieNode> node = root;
     for (char character : key)
     {
-        auto [it, inserted] = node->children.try_emplace(character, std::make_unique<TrieNode>());
-        node = it->second.get();
+        if (!node.get().children.contains(character)) [[unlikely]] {
+            nodes.emplace_back();
+            node.get().children.emplace(character, nodes.back());
+        }
+        node = node.get().children.at(character);
     }
-    node->target = value;
+    node.get().target = value;
 }
 
-[[nodiscard]] std::pair<std::string_view, bool> Trie::searchFullMatch(const std::span<const char>& cachedData)
+[[nodiscard]] std::pair<std::string_view, bool> Trie::searchFullMatch(const std::span<const char>& cachedData) const
 {
-    TrieNode* node = &root;
+    std::reference_wrapper<const TrieNode> node = root;
     for (char c: cachedData)
     {
-        auto res = node->children.find(c);
-        if (res == node->children.end())
+        auto res = node.get().children.find(c);
+        if (res == node.get().children.end())
         {
             return std::make_pair(std::string_view(), false);
         }
@@ -25,9 +28,9 @@ void Trie::insert(std::string_view key, std::string_view value)
     }
 
     // full match
-    if (node->target)
+    if (node.get().target)
     {
-        return std::make_pair(node->target.value(), true);
+        return std::make_pair(node.get().target.value(), true);
     }
 
     return std::make_pair(std::string_view(), false);
