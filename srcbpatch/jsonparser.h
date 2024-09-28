@@ -12,7 +12,7 @@ namespace bpatch
 /// <param name="sv">where to check</param>
 /// <param name="at">pos to check</param>
 /// <returns>true if the character is whitespace</returns>
-bool WhiteSpace(const std::string_view& sv, const size_t at);
+bool WhiteSpace(const std::string_view sv, const size_t at);
 
 
 /// <summary>
@@ -38,7 +38,7 @@ bool ModifyStringValue(char* ptr, size_t& resultLength, const size_t maxLength);
 /// <param name="at">from pos to check</param>
 /// <returns>std::pair<bool, size_t> bool (found / not found) +
 /// size_t (result length / 0)</returns>
-std::pair<bool, size_t> getJSONNumberLength(const std::string_view& str, const size_t at);
+std::pair<bool, size_t> getJSONNumberLength(const std::string_view str, const size_t at);
 
 
 /// <summary>
@@ -53,7 +53,7 @@ std::pair<bool, size_t> getJSONNumberLength(const std::string_view& str, const s
 /// <param name="at">from pos to check</param>
 /// <returns>std::pair<bool, size_t> bool (found / not found) +
 /// size_t (result length / 0)</returns>
-std::pair<bool, size_t> getJSONTrueFalseNull(const std::string_view& str, const size_t at);
+std::pair<bool, size_t> getJSONTrueFalseNull(const std::string_view str, const size_t at);
 
 /// forward declaration
 /// declared in this file below
@@ -120,7 +120,7 @@ public:
     /// <note>data in string view will be changed! \n->0x0A  for example;
     /// unicode characters ignored</note>
     /// <returns>root Object. Or throws</returns>
-    static PTR_JSON CreateJSONObject(std::string_view& sv, TJsonCallBack* pCallback = nullptr);
+    static PTR_JSON CreateJSONObject(std::string_view sv, TJsonCallBack* pCallback = nullptr);
 
 
     TJSONObject(TJSONObject* const aparent);
@@ -172,7 +172,7 @@ protected: // parsing
 /// <param name="sv"> data to read</param>
 /// <param name="at"> position where we did not find expected in data</param>
 /// <param name="message">Explanatory text of the error</param>
-static void ReportError(std::string_view& sv, const size_t at, const char* const message);
+static void ReportError(std::string_view sv, const size_t at, const char* const message);
 
 
 /// <summary>
@@ -185,7 +185,7 @@ static void ReportError(std::string_view& sv, const size_t at, const char* const
 /// <param name="at">pos from where to search</param>
 /// <returns>only name as string view. the data inside could be trasformed according
 /// Control Characters replacement </returns>
-static std::string_view GetStringValue(std::string_view& sv, size_t& at);
+static std::string_view GetStringValue(std::string_view sv, size_t& at);
 
 
 /// <summary>
@@ -193,14 +193,14 @@ static std::string_view GetStringValue(std::string_view& sv, size_t& at);
 /// </summary>
 /// <param name="sv">working with this data</param>
 /// <param name="at">pos of first character after '{'</param>
-void OnJSONObject(std::string_view& sv, size_t& at);
+void OnJSONObject(std::string_view sv, size_t& at);
 
 /// <summary>
 ///   Parsing the value for Json object
 /// </summary>
 /// <param name="sv">working with this data</param>
 /// <param name="at">pos of first character after ':'</param>
-void OnJSONValue(std::string_view& sv, size_t& at);
+void OnJSONValue(std::string_view sv, size_t& at);
 
 
 /// <summary>
@@ -209,7 +209,7 @@ void OnJSONValue(std::string_view& sv, size_t& at);
 /// </summary>
 /// <param name="sv">working with this data</param>
 /// <param name="at">pos of first character after '['</param>
-void OnJSONArray(std::string_view& sv, size_t& at);
+void OnJSONArray(std::string_view sv, size_t& at);
 
 
 /// <summary>
@@ -218,7 +218,7 @@ void OnJSONArray(std::string_view& sv, size_t& at);
 /// </summary>
 /// <param name="sv">where to search</param>
 /// <param name="at">moving the position</param>
-static void PassWhitespaces(std::string_view& sv, size_t& at);
+static void PassWhitespaces(std::string_view sv, size_t& at);
 
 }; // class TJSONObject
 
