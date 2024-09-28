@@ -12,7 +12,7 @@ FlexibleCache::FlexibleCache()
 }
 
 
-bool FlexibleCache::Accumulate(const string_view& adata)
+bool FlexibleCache::Accumulate(const string_view adata)
 {
     unique_ptr<Chunk>& activeChunk = *currentChunk;
 
