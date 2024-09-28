@@ -314,7 +314,7 @@ void ActionsCollection::ReportError(const char* const message)
     throw std::runtime_error(message);
 }
 
-void ActionsCollection::ReportDuplicateNameError(const std::string_view& aname)
+void ActionsCollection::ReportDuplicateNameError(const std::string_view aname)
 {
     std::stringstream ss;
     ss << "Duplicate name '" << aname << "' has been met in Actions file";
@@ -322,7 +322,7 @@ void ActionsCollection::ReportDuplicateNameError(const std::string_view& aname)
 }
 
 
-void ActionsCollection::ReportMissedNameError(const std::string_view& aname)
+void ActionsCollection::ReportMissedNameError(const std::string_view aname)
 {
     std::stringstream ss;
     ss << "Cannot find lexeme name '" << aname << "' in Actions file";
