@@ -177,7 +177,12 @@ public:
     size_t Written() const noexcept override; // the only way to get writeAt_
 
 protected:
-    size_t WriteAndThrowIfFail(const std::string_view& sv); // here writeAt_ could grow
+    /// <summary>
+    ///   !unlocked! write file inside. Throws If the written amount do not equal to the requested
+    /// </summary>
+    /// <param name="sv"> data to write</param>
+    /// <returns>written amount</returns>
+    size_t WriteAndThrowIfFail(const std::string_view sv); // here writeAt_ could grow
 
     /// <summary>
     ///   write either full chunks only or everything if aEod was achieved

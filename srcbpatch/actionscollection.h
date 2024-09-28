@@ -75,13 +75,13 @@ protected:
     ///   throws error if we meet duplicate name of lexeme
     /// </summary>
     /// <param name="aname">duplicate name of lexeme</param>
-    static void ReportDuplicateNameError(const std::string_view& aname);
+    static void ReportDuplicateNameError(const std::string_view aname);
 
     /// <summary>
     ///   throws error if we cannot find lexeme for composite lexeme
     /// </summary>
     /// <param name="aname">nonexistent name of lexeme</param>
-    static void ReportMissedNameError(const std::string_view& aname);
+    static void ReportMissedNameError(const std::string_view aname);
 
     /// <summary>
     ///   parse array of either 10 based integers or array of hex based strings

@@ -44,9 +44,8 @@ namespace // for json specific errors
 ///                                  LF    CR    Tab
 constexpr char whitespaces[] = {' ', 0x0A, 0x0D, 0x09};
 
-bool WhiteSpace(const std::string_view& sv, const size_t at)
+bool WhiteSpace(const std::string_view sv, const size_t at)
 {
-
     return (sv.size() > at &&
         std::ranges::any_of(whitespaces,
         [v = sv.at(at)](const char c)->bool
@@ -127,7 +126,7 @@ bool ModifyStringValue(char* ptr, size_t& resultLength, const size_t maxLength)
     return true;
 }
 
-std::pair<bool, size_t> checkJSONPattern(const std::string_view& str, const size_t at, std::regex& patternX)
+std::pair<bool, size_t> checkJSONPattern(const std::string_view str, const size_t at, std::regex& patternX)
 {
     std::cmatch match;
     const char* const p = str.data() + at;
@@ -141,7 +140,7 @@ std::pair<bool, size_t> checkJSONPattern(const std::string_view& str, const size
 }
 
 
-std::pair<bool, size_t> getJSONNumberLength(const std::string_view& str, const size_t at)
+std::pair<bool, size_t> getJSONNumberLength(const std::string_view str, const size_t at)
 {
     std::string_view firstCharSet("-0123456789");
     if (std::ranges::find(firstCharSet, str.at(at)) == std::cend(firstCharSet))
@@ -157,7 +156,7 @@ std::pair<bool, size_t> getJSONNumberLength(const std::string_view& str, const s
 }
 
 
-std::pair<bool, size_t> getJSONTrueFalseNull(const std::string_view& str, const size_t at)
+std::pair<bool, size_t> getJSONTrueFalseNull(const std::string_view str, const size_t at)
 {
     
     if (const char c = str.at(at); c != 't' && c!='f' && c != 'n')
@@ -175,7 +174,7 @@ std::pair<bool, size_t> getJSONTrueFalseNull(const std::string_view& str, const 
 ////////////////////////////////////////////////////////////////
 
 // returns true if end of stream reached
-bool ThroughWhiteSpaces(std::string_view& sv, size_t& at)
+bool ThroughWhiteSpaces(std::string_view sv, size_t& at)
 {
     while (at < sv.size() && WhiteSpace(sv, at))
     {
@@ -185,7 +184,7 @@ bool ThroughWhiteSpaces(std::string_view& sv, size_t& at)
 }
 
 
-TJSONObject::PTR_JSON TJSONObject::CreateJSONObject(std::string_view& sv, TJsonCallBack* pCallback)
+TJSONObject::PTR_JSON TJSONObject::CreateJSONObject(std::string_view sv, TJsonCallBack* pCallback)
 {
     size_t at = 0;
     PassWhitespaces(sv, at);
@@ -446,7 +445,7 @@ bool TJSONObject::SetMeAsArray()
 
 
 /// @brief returns {lines count, pos at line}
-auto LinesCount(std::string_view& sv, const size_t till)
+auto LinesCount(std::string_view sv, const size_t till)
 {
     size_t n = 0;
     size_t r = 0;
@@ -470,7 +469,7 @@ auto LinesCount(std::string_view& sv, const size_t till)
 }
 
 
-void TJSONObject::ReportError(std::string_view& sv, const size_t at, const char* const message)
+void TJSONObject::ReportError(std::string_view sv, const size_t at, const char* const message)
 {
     auto [nLine, posAtLine] = LinesCount(sv, at);
     std::stringstream ss;
@@ -480,7 +479,7 @@ void TJSONObject::ReportError(std::string_view& sv, const size_t at, const char*
 }
 
 
-std::string_view TJSONObject::GetStringValue(std::string_view& sv, size_t& at)
+std::string_view TJSONObject::GetStringValue(std::string_view sv, size_t& at)
 {
     if ('\"' != sv.at(at))
     {
@@ -507,7 +506,7 @@ std::string_view TJSONObject::GetStringValue(std::string_view& sv, size_t& at)
 }
 
 
-void TJSONObject::OnJSONObject(std::string_view& sv, size_t& at)
+void TJSONObject::OnJSONObject(std::string_view sv, size_t& at)
 {
     PassWhitespaces(sv, at);
     while (sv.at(at) != '}') // empty object is also ok
@@ -556,7 +555,7 @@ void TJSONObject::OnJSONObject(std::string_view& sv, size_t& at)
 };
 
 
-void TJSONObject::OnJSONValue(std::string_view& sv, size_t& at)
+void TJSONObject::OnJSONValue(std::string_view sv, size_t& at)
 {
     PassWhitespaces(sv, at);
 
@@ -621,7 +620,7 @@ void TJSONObject::OnJSONValue(std::string_view& sv, size_t& at)
 }
 
 
-void TJSONObject::OnJSONArray(std::string_view& sv, size_t& at)
+void TJSONObject::OnJSONArray(std::string_view sv, size_t& at)
 {
     if (callback_)
     {
@@ -729,7 +728,7 @@ void TJSONObject::OnJSONArray(std::string_view& sv, size_t& at)
 }
 
 
-void TJSONObject::PassWhitespaces(std::string_view& sv, size_t& at)
+void TJSONObject::PassWhitespaces(std::string_view sv, size_t& at)
 {
     if (ThroughWhiteSpaces(sv, at)) // end of string view has been reached
     {

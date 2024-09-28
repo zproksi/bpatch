@@ -248,7 +248,7 @@ protected:
     ///   Sends target to next replacers, and resets partial match index to zero
     /// </summary>
     /// <param name="target">the array we need to send</param>
-    void SendAndResetPartialMatch(const span<const char>& target) const
+    void SendAndResetPartialMatch(const span<const char> target) const
     {
         for (const char c : target)
         {
@@ -335,7 +335,7 @@ void ChoiceReplacer::DoReplacements(const char toProcess, const bool aEod) const
             return;
         }
         // No any match -> send 1 char from cache
-        SendAndResetPartialMatch(std::span<char> (cachedData_.data(), 1));
+        SendAndResetPartialMatch(std::span<char>(cachedData_.data(), 1));
         CleanTheCache(1);
     }
 }

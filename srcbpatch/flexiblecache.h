@@ -34,7 +34,7 @@ public:
     /// </summary>
     /// <param name="data"> data to accumulate</param>
     /// <returns>true if root chunk completely filled with data</returns>
-    bool Accumulate(const std::string_view& adata);
+    bool Accumulate(const std::string_view adata);
 
 
     /// <summary>

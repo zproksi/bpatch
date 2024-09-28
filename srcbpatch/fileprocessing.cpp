@@ -103,7 +103,7 @@ size_t WriteFileProcessing::Written() const noexcept
     return writeAt_;
 }
 
-size_t WriteFileProcessing::WriteAndThrowIfFail(const string_view& sv)
+size_t WriteFileProcessing::WriteAndThrowIfFail(const string_view sv)
 {
 #ifdef __linux__
     const size_t written = fwrite_unlocked(sv.data(), sizeof(sv.data()[0]), sv.size(), stream_);
