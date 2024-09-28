@@ -75,9 +75,9 @@ namespace wildcharacters
     }
 
 
-    bool LookUp::RegisterSourceAndDestination(const std::string_view& src_, const std::string_view& dst_)
+    bool LookUp::RegisterSourceAndDestination(const std::string_view src_, const std::string_view dst_)
     {
-        auto initialExtraction = [](const std::string_view& a_, std::string& apath, std::string& aname)
+        auto initialExtraction = [](const std::string_view a_, std::string& apath, std::string& aname)
         {
             std::filesystem::path src_path(a_);
             // Extract filename or mask

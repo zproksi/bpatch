@@ -37,7 +37,7 @@ namespace wildcharacters
         ///    NOTE: logic for returning false comparing both paths as strings for being equal;
         ///   true - all other cases;
         ///   throws logic_error in case of errorneous set of arguments</returns>
-        bool RegisterSourceAndDestination(const std::string_view& src_, const std::string_view& dst_);
+        bool RegisterSourceAndDestination(const std::string_view src_, const std::string_view dst_);
 
         /// <summary>
         ///    get next pair of file names for processing
