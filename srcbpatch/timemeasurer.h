@@ -23,7 +23,7 @@ class TimeMeasurer final
 
 public:
     /// @brief Full name of meaure should be passed in constructor
-    TimeMeasurer(const std::string_view& name);
+    TimeMeasurer(const std::string_view name);
 
     /// @brief all time points from shortes moments to longest will be printed 
     ///   with corresponding names
@@ -35,7 +35,7 @@ public:
     const long long NanosecondsElapsed(const TIME_POINT_TYPE at) const;
 
     /// @brief save time point in the class
-    void RegisterTimePoint(const std::string_view& name);
+    void RegisterTimePoint(const std::string_view name);
 
     /// @brief returns initial moment of measurements
     TIME_POINT_TYPE ExecutionTimePoint() const;

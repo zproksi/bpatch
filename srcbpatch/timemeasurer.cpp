@@ -2,7 +2,7 @@
 #include <iostream>
 #include "timemeasurer.h"
 
-TimeMeasurer::TimeMeasurer(const std::string_view& name)
+TimeMeasurer::TimeMeasurer(const std::string_view name)
     :startPoint{name, std::chrono::high_resolution_clock::now()}
 {
 }
@@ -21,7 +21,7 @@ const long long TimeMeasurer::NanosecondsElapsed(const TIME_POINT_TYPE at) const
     return std::chrono::duration_cast<std::chrono::nanoseconds>(at - ExecutionTimePoint()).count();
 }
 
-void TimeMeasurer::RegisterTimePoint(const std::string_view& name)
+void TimeMeasurer::RegisterTimePoint(const std::string_view name)
 {
     timePoints.emplace_back(TimePoint{name, std::chrono::high_resolution_clock::now()});
 }
