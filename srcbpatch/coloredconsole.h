@@ -11,7 +11,7 @@ namespace coloredconsole
     /// </summary>
     /// <param name="os"> std::cout actually</param>
     /// <param name="sv">string view to search ERROR and Warning words for colorization</param>
-    void ColorizeWords(std::ostream& os, const std::string_view& sv);
+    void ColorizeWords(std::ostream& os, const std::string_view sv);
 
     template<typename T>
     struct is_char_array : std::false_type {}; // by default the type is not char array

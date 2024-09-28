@@ -46,7 +46,7 @@ namespace coloredconsole
     };
 #endif
 
-    void ColorizeWords(std::ostream& os, const std::string_view& sv)
+    void ColorizeWords(std::ostream& os, const std::string_view sv)
     {
         static const std::string_view errorSV = "ERROR";
         static const std::string_view warningSV = "Warning";
@@ -90,7 +90,7 @@ namespace coloredconsole
             pos = sv.size();
         } // while (pos < sv.size())
 
-    }// void ColorizeWords(std::ostream& os, const std::string_view& sv)
+    }// void ColorizeWords(std::ostream& os, const std::string_view sv)
 
 } // namespace coloredconsole
 

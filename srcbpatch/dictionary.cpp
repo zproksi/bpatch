@@ -6,7 +6,7 @@
 namespace bpatch
 {
 
-std::unique_ptr<AbstractBinaryLexeme>& Dictionary::Lexeme(const std::string_view& aname) const
+std::unique_ptr<AbstractBinaryLexeme>& Dictionary::Lexeme(const std::string_view aname) const
 {
     if (auto it = dict.find(aname); it != dict.cend())
     {
@@ -16,13 +16,13 @@ std::unique_ptr<AbstractBinaryLexeme>& Dictionary::Lexeme(const std::string_view
 }
 
 
-AbstractLexemesPair Dictionary::LexemesPair(const std::string_view& anameSrc, const std::string_view& anameTrg) const
+AbstractLexemesPair Dictionary::LexemesPair(const std::string_view anameSrc, const std::string_view anameTrg) const
 {
     return {Lexeme(anameSrc), Lexeme(anameTrg)};
 }
 
 
-bool Dictionary::AddBinaryLexeme(const std::string_view& aname, std::unique_ptr<AbstractBinaryLexeme>&& alexeme)
+bool Dictionary::AddBinaryLexeme(const std::string_view aname, std::unique_ptr<AbstractBinaryLexeme>&& alexeme)
 {
     auto it = lexemes_.emplace(lexemes_.cend(), std::move(alexeme));
 
