@@ -21,6 +21,7 @@ set(SOURCE_FILES
     stdafx.cpp
     streamreplacer.cpp
     timemeasurer.cpp
+    trie.cpp
 )
 set(HEADER_FILES
     actionscollection.h
@@ -37,6 +38,7 @@ set(HEADER_FILES
     stdafx.h
     streamreplacer.h
     timemeasurer.h
+    trie.h
 )
 
 # Define the executable target

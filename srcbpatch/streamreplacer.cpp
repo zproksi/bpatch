@@ -2,6 +2,7 @@
 #include "binarylexeme.h"
 #include "fileprocessing.h"
 #include "streamreplacer.h"
+#include "trie.h"
 
 namespace bpatch
 {
@@ -94,7 +95,7 @@ protected:
 
     mutable size_t cachedAmount_ = 0; // we cached this amount of data
 
-    // this is used to hold temporary data while the logic is 
+    // this is used to hold temporary data while the logic is
     // looking for the new beginning of the cached value
     mutable vector<char> cachedData_;
 };
@@ -173,7 +174,7 @@ static unique_ptr<StreamReplacer> CreateSimpleReplacer(
 ///      |--SRC 1  TRG 1  |
 ///  O - |-- ...          | - o
 ///      |--SRC N  TRG N  |
-/// 
+///
 class ChoiceReplacer final : public ReplacerWithNext
 {
     typedef struct
@@ -300,7 +301,7 @@ protected:
     mutable size_t cachedAmount_ = 0; // we cached this amount of data
     mutable size_t indexOfPartialMatch_ = 0; // this index from rpairs_ represents last partial match
 
-    // this is used to hold temporary data while the logic is 
+    // this is used to hold temporary data while the logic is
     // looking for the new beginning of the cached value
     mutable vector<char> cachedData_;
 };
@@ -359,14 +360,7 @@ public:
         {
             const span<const char>& src = alpair.first->access();
             const span<const char>& trg = alpair.second->access();
-            if (auto result = replaceOptions_.insert(
-                {
-                    string_view(src.data(), src.size()),
-                    string_view(trg.data(), trg.size()),
-                }); !result.second)
-            {
-                cout << coloredconsole::toconsole(warningDuplicatePattern) << endl;
-            }
+            trie_.insert(string_view(src.data(), src.size()), string_view(trg.data(), trg.size()));
         }
     }
 
@@ -374,11 +368,10 @@ public:
 
 protected:
     // here we hold pairs of sources and targets
-    unordered_map<string_view, string_view> replaceOptions_;
-
+    mutable Trie trie_;
     mutable size_t cachedAmount_ = 0; // we cache this amount of data in the cachedData_
 
-    // this is used to hold temporary data while the logic is 
+    // this is used to hold temporary data while the logic is
     // looking for the new beginning of the cached value
     mutable vector<char> cachedData_;
 };
@@ -405,20 +398,22 @@ void UniformLexemeReplacer::DoReplacements(const char toProcess, const bool aEod
 
 
     // set buffer of cached at once
-    char* const& pBuffer = cachedData_.data();
-    pBuffer[cachedAmount_++] = toProcess;
-    if (cachedAmount_ >= cachedData_.size())
+    cachedData_[cachedAmount_++] = toProcess;
+    if (cachedAmount_ == cachedData_.size())
     {
-        if (const auto it = replaceOptions_.find(string_view(pBuffer, cachedAmount_)); it != replaceOptions_.cend())
-        { // found
-            string_view trg = it->second;
-            for (size_t q = 0; q < trg.size(); ++q) { pNext_->DoReplacements(trg[q], false); }
+        if (auto [target, fullMatch] = trie_.searchFullMatch(std::span<char> (cachedData_.data(), cachedAmount_)); fullMatch)
+        {
+            for (char q: target)
+            {
+                pNext_->DoReplacements(q, false);
+            }
             cachedAmount_ = 0;
         }
         else
-        { // not found
-            pNext_->DoReplacements(pBuffer[0], false); // send 1 char
-            std::shift_left(pBuffer, pBuffer + cachedAmount_--, 1);
+        {
+            // not found
+            pNext_->DoReplacements(cachedData_[0], false);
+            std::shift_left(cachedData_.begin(), cachedData_.begin() + cachedAmount_--, 1);
         }
     }
 }
