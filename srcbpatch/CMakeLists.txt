@@ -20,7 +20,6 @@ set(SOURCE_FILES
     processing.cpp
     stdafx.cpp
     streamreplacer.cpp
-    timemeasurer.cpp
 )
 set(HEADER_FILES
     actionscollection.h
@@ -36,8 +35,21 @@ set(HEADER_FILES
     processing.h
     stdafx.h
     streamreplacer.h
-    timemeasurer.h
 )
+
+##get google test
+include(FetchContent)
+FetchContent_Declare(timemeasurer
+        GIT_REPOSITORY https://github.com/zproksi/timemeasurer
+        GIT_TAG release-1.0.1)
+FetchContent_GetProperties(timemeasurer)
+#timemeasurer_POPULATED
+#timemeasurer_SOURCE_DIR
+#timemeasurer_BUILD_DIR
+if(NOT timemeasurer_POPULATED)
+    FetchContent_Populate(timemeasurer)
+    add_subdirectory(${timemeasurer_SOURCE_DIR} ${timemeasurer_BUILD_DIR})
+endif()
 
 # Define the executable target
 add_library(${PROJECT_NAME} ${SOURCE_FILES} ${HEADER_FILES})
