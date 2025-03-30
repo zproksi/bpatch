@@ -33,4 +33,4 @@ endif()
 # Precompiled header
 target_precompile_headers(${PROJECT_NAME} PRIVATE pch.h)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE wildcharacters src${pname} gtest_main gmock_main)
+target_link_libraries(${PROJECT_NAME} PRIVATE timemeasurer wildcharacters src${pname} gtest_main gmock_main)

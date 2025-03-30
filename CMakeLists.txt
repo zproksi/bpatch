@@ -89,6 +89,22 @@ if(NOT googletest_POPULATED)
     add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BUILD_DIR})
 endif()
 
+##get timemeasurer
+include(FetchContent)
+FetchContent_Declare(timemeasurer
+        GIT_REPOSITORY https://github.com/zproksi/timemeasurer
+        GIT_TAG 12d04cd406960c8b75af79c476ab0037332a68b4)
+FetchContent_MakeAvailable(timemeasurer)
+#FetchContent_GetProperties(timemeasurer)
+#timemeasurer_POPULATED
+#timemeasurer_SOURCE_DIR
+#timemeasurer_BUILD_DIR
+if(NOT timemeasurer_POPULATED)
+    FetchContent_Populate(timemeasurer)
+    add_subdirectory(${timemeasurer_SOURCE_DIR} ${timemeasurer_BUILD_DIR})
+endif()
+include_directories(${timemeasurer_SOURCE_DIR})
+
 include_directories(${wild_library})
 include_directories(src${pname})
 
@@ -135,7 +151,7 @@ add_subdirectory(${wild_library})
 add_subdirectory(src${pname})
 add_subdirectory(test${pname})
 
-target_link_libraries(${pname} src${pname} ${wild_library})
+target_link_libraries(${pname} src${pname} ${wild_library} timemeasurer)
 
 # Console commands for building on Windows with Visual Studio
 # !!!!!!!!!!!!!
