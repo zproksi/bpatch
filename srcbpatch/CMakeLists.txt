@@ -37,20 +37,6 @@ set(HEADER_FILES
     streamreplacer.h
 )
 
-##get google test
-include(FetchContent)
-FetchContent_Declare(timemeasurer
-        GIT_REPOSITORY https://github.com/zproksi/timemeasurer
-        GIT_TAG release-1.0.1)
-FetchContent_GetProperties(timemeasurer)
-#timemeasurer_POPULATED
-#timemeasurer_SOURCE_DIR
-#timemeasurer_BUILD_DIR
-if(NOT timemeasurer_POPULATED)
-    FetchContent_Populate(timemeasurer)
-    add_subdirectory(${timemeasurer_SOURCE_DIR} ${timemeasurer_BUILD_DIR})
-endif()
-
 # Define the executable target
 add_library(${PROJECT_NAME} ${SOURCE_FILES} ${HEADER_FILES})
 
